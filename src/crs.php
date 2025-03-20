@@ -7,50 +7,9 @@ require_once(__DIR__."/geometry.php");
 
 abstract class CRS
 {
-    private $tilesize = 256;
 
-    public function setTileSize($tilesize) 
-    {
-        $this->tilesize = intval($tilesize);
-    }
-    public function getTileSize() 
-    {
-        return $this->tilesize;
-    }
 
-    // Transform the lat lon position to a pixel position in the map
-    public function latLonToMap(LatLon $latlon, $zoom)
-    {
-        $p = $this->project($latlon);
-        $mapsize = $this->mapSize($zoom);
-        $m = $this->crsToMapTransformation($mapsize);
-        $pixel = $m->transform($p);
-        return $pixel;
-    }
 
-    // Transform a map pixel position to lat lon
-    public function mapToLatLon(Point $pixel, $zoom)
-    {
-        $mapsize = $this->mapSize($zoom);
-        $m = $this->mapToCrsTransformation($mapsize);
-        $p = $m->transform($pixel);
-        $latlon = $this->unproject($p);
-        return $latlon;
-    }
-
-    // The map is made up of tiles, 2^zoom in each direction
-    // This returns the tile for a specific map pixel
-    public function getTile(Point $pixel)
-    {
-        $tilesize = $this->getTileSize();
-        return new Point(intval(floor($pixel->x / $tilesize)),
-                        intval(floor($pixel->y / $tilesize)));
-    }
-
-    public function getNumTiles($zoom)
-    {
-        return pow(2, intval($zoom));
-    }
 
     // Project a lat lon position to a location in the CRS
     public function project(LatLon $latlon)
@@ -70,12 +29,6 @@ abstract class CRS
     {
         //throw new \Exception("not implemented");
         return 1;
-    }
-
-    // Map size in pixels at specified zoom level (0,1,2,...)
-    public function mapSize($zoom)
-    {
-        return $this->tilesize * $this->getNumTiles($zoom);
     }
 
     // Get the transformation matrix that transforms from the CRS to
