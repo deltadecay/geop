@@ -4,15 +4,95 @@ namespace geop;
 
 require_once(__DIR__."/geometry.php");
 
-interface CRS 
+
+abstract class CRS
 {
-    public function project(LatLon $latlon);
-    public function unproject(Point $p);
+    private $tilesize = 256;
 
-    public function scalefactor($latitude);
+    public function setTileSize($tilesize) 
+    {
+        $this->tilesize = intval($tilesize);
+    }
+    public function getTileSize() 
+    {
+        return $this->tilesize;
+    }
+
+    // Transform the lat lon position to a pixel position in the map
+    public function latLonToMap(LatLon $latlon, $zoom)
+    {
+        $p = $this->project($latlon);
+        $mapsize = $this->mapSize($zoom);
+        $m = $this->crsToMapTransformation($mapsize);
+        $pixel = $m->transform($p);
+        return $pixel;
+    }
+
+    // Transform a map pixel position to lat lon
+    public function mapToLatLon(Point $pixel, $zoom)
+    {
+        $mapsize = $this->mapSize($zoom);
+        $m = $this->mapToCrsTransformation($mapsize);
+        $p = $m->transform($pixel);
+        $latlon = $this->unproject($p);
+        return $latlon;
+    }
+
+    // The map is made up of tiles, 2^zoom in each direction
+    // This returns the tile for a specific map pixel
+    public function getTile(Point $pixel)
+    {
+        $tilesize = $this->getTileSize();
+        return new Point(intval(floor($pixel->x / $tilesize)),
+                        intval(floor($pixel->y / $tilesize)));
+    }
+
+    public function getNumTiles($zoom)
+    {
+        return pow(2, intval($zoom));
+    }
+
+    // Project a lat lon position to a location in the CRS
+    public function project(LatLon $latlon)
+    {
+        //throw new \Exception("not implemented");
+        return new Point();
+    }
+
+    // Unproject a location in the CRS to a lat lon position
+    public function unproject(Point $p)
+    {
+        //throw new \Exception("not implemented");
+        return new LatLon();
+    }
+
+    public function scalefactor($latitude)
+    {
+        //throw new \Exception("not implemented");
+        return 1;
+    }
+
+    // Map size in pixels at specified zoom level (0,1,2,...)
+    public function mapSize($zoom)
+    {
+        return $this->tilesize * $this->getNumTiles($zoom);
+    }
+
+    // Get the transformation matrix that transforms from the CRS to
+    // map pixels
+    public function crsToMapTransformation($mapsize)
+    {
+        //throw new \Exception("not implemented");
+        return Matrix::identity();
+    }
+
+    // Get the transformation matrix that transforms from map pixels to the CRS
+    public function mapToCrsTransformation($mapsize)
+    {
+        //throw new \Exception("not implemented");
+        return Matrix::identity();
+    }
 }
-
-
 
 // We use the convention that the earth is a sphere with radius R = 6371009
 // Why:
@@ -28,10 +108,10 @@ interface CRS
 // The arithmetic mean radius
 // $R = (2*$R_e + $R_p) / 3;        // 6371008.7714 m
 //
-class Earth 
+class Earth extends CRS
 {
-
     // Compute the great circle distance between two locations
+    // using Haversine formula
     public function distance(LatLon $l1, LatLon $l2)
     {
         // Haversine formula
@@ -55,7 +135,7 @@ class Earth
 
 }
 
-class CRS_EPSG3857 extends Earth implements CRS
+class CRS_EPSG3857 extends Earth
 {
     const R = 6378137; // Earth equatorial radius
     const MAX_LATITUDE = 85.051128779807; // atan(sinh(M_PI))*180/M_PI;
@@ -100,5 +180,25 @@ class CRS_EPSG3857 extends Earth implements CRS
         return 1.0 / cos($latitude * M_PI / 180.0);
     }
 
+    // Transformation matrix to transform from crs to map pixels [0,$mapsize)
+    public function crsToMapTransformation($mapsize)
+    {
+        $scale = $mapsize * 0.5 / (M_PI * self::R);
+        /*return Matrix::mul(
+            Matrix::translation(0.5*$mapsize, 0.5*$mapsize),
+            Matrix::scale($scale, -$scale)); */
+        // Since translate comes after scale we can use the constructor
+        // to save on the matrix mul
+        return new Matrix($scale, 0, 0.5*$mapsize,
+                            0, -$scale, 0.5*$mapsize);
+    }
 
+    public function mapToCrsTransformation($mapsize)
+    {
+        // This is the inverse of crsToMapTransformation
+        $scale = (M_PI * self::R) * 2 / $mapsize;
+        return Matrix::mul(
+            Matrix::scale($scale, -$scale),
+            Matrix::translation(-0.5*$mapsize, -0.5*$mapsize));
+    }
 }
