@@ -25,15 +25,24 @@ class Map
         return $this->tilesize;
     }
 
+    public function isTileValid(Point $tile, $zoom)
+    {
+        $ntiles = $this->getNumTiles($zoom);
+   
+        return (0 <= $tile->y && $tile->y <= $ntiles-1 &&
+        0 <= $tile->x && $tile->x <= $ntiles-1);
+    }
 
-        // The map is made up of tiles, 2^zoom in each direction
+    // The map is made up of tiles, 2^zoom in each direction
     // This returns the tile for a specific map pixel
     public function getTile(Point $pixel, $zoom)
     {
-        $ntiles = $this->getNumTiles($zoom);
-        $tilesize = $this->getTileSize();
+        //$ntiles = $this->getNumTiles($zoom);
+        $tilesize = floatval($this->getTileSize());
         $tx = intval(floor($pixel->x / $tilesize));
         $ty = intval(floor($pixel->y / $tilesize));
+        
+        /*
         //if($tx < 0) $tx = 0;
         //if($tx > $ntiles-1) $tx = $ntiles-1;
         
@@ -42,6 +51,7 @@ class Map
 
         if($ty < 0) $ty = 0;
         if($ty > $ntiles-1) $ty = $ntiles-1;
+        */
         return new Point($tx, $ty);
     }
 

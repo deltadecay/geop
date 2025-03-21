@@ -23,8 +23,7 @@ test("latLonToMap", function(){
     $pixel = $map->latLonToMap(new LatLon(60, 20), $zoom);
     expect($pixel->x)->toBeCloseTo(568.9, 0);
     expect($pixel->y)->toBeCloseTo(297.4, 0);
-    $tile = $map->getTile($pixel);
-
+    
     $pixel = $map->latLonToMap(new LatLon(CRS_EPSG3857::MAX_LATITUDE, -180), $zoom);
     expect($pixel->x)->toBeCloseTo(0, 0);
     expect($pixel->y)->toBeCloseTo(0, 0);
