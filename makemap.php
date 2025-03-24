@@ -10,70 +10,83 @@ use \geop\LatLon;
 use \geop\Point;
 use \geop\TileService;
 
-$map = new Map(new CRS_EPSG3857());
-$map->setTileSize(256);
-$zoom = 4;
-
-$cp = new LatLon(63.8283, 20.2617);
-
-$render_width = 800;
-$render_height = 400;
-
-$cp_pixel = $map->latLonToMap($cp, $zoom);
-$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
-$bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
-
-$cp_tile = $map->getTile($cp_pixel, $zoom);
-$topleft_tile = $map->getTile($topleft_pixel, $zoom);
-$bottomright_tile = $map->getTile($bottomright_pixel, $zoom);
-
-$tileservice = new TileService("osm", "https://tile.openstreetmap.org/{z}/{x}/{y}.png");
-//$tileservice = new TileService("arcgis_world_imagery", "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}");
-//$tileservice = new TileService("arcgis_world_street", "https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}");
-//$tileservice = new TileService("arcgis_world_topo", "https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}");
 
 
-// This is the image wisth of all the tiles fitting completely
-// then it will be cropped to render width and size
-$mapimgwidth = $map->getTileSize() * ($bottomright_tile->x - $topleft_tile->x + 1);
-$mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
-
-// Create map image with chosen background color
-// and size $mapimgwidth x $mapimgheight
-$mapimage = new \Imagick();
-$mapimage->newImage($mapimgwidth, $mapimgheight, new \ImagickPixel('#7f7f7f'));
-$mapimage->setImageFormat('png');
-
-$ntiles = $map->getNumTiles($zoom);
-
-$offsety = 0;
-for($ty=$topleft_tile->y; $ty<=$bottomright_tile->y; $ty++)
+function renderMap($lat, $lon, $zoom, $render_width, $render_height)
 {
-    $offsetx = 0;
-    for($tx=$topleft_tile->x; $tx<=$bottomright_tile->x; $tx++)
+    $cp = new LatLon($lat, $lon);
+    $map = new Map(new CRS_EPSG3857());
+    $map->setTileSize(256);
+    $cp_pixel = $map->latLonToMap($cp, $zoom);
+    $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+    $bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
+
+    $cp_tile = $map->getTile($cp_pixel, $zoom);
+    // Note! These tile coordinates can be outside map bounds, negative or >= getNumTiles
+    $topleft_tile = $map->getTile($topleft_pixel, $zoom);
+    $bottomright_tile = $map->getTile($bottomright_pixel, $zoom);
+
+    $tileservice = new TileService("osm", "https://tile.openstreetmap.org/{z}/{x}/{y}.png");
+    //$tileservice = new TileService("arcgis_world_imagery", "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}");
+    //$tileservice = new TileService("arcgis_world_street", "https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}");
+    //$tileservice = new TileService("arcgis_world_topo", "https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}");
+
+    // This is the image wisth of all the tiles fitting completely
+    // then it will be cropped to render width and size
+    $mapimgwidth = $map->getTileSize() * ($bottomright_tile->x - $topleft_tile->x + 1);
+    $mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
+
+    $mapimage = new \Imagick();
+    $mapimage->newImage($mapimgwidth, $mapimgheight, new \ImagickPixel('#7f7f7f'));
+    $mapimage->setImageFormat('png');
+
+    $ntiles = $map->getNumTiles($zoom);
+
+    // Fetch and compose tiles into the map image
+    $offsety = 0;
+    for($ty=$topleft_tile->y; $ty<=$bottomright_tile->y; $ty++)
     {
-        // wrap tiles along longitude
-        $wrapped_tx = ($tx + $ntiles)  % $ntiles;
-        $tile = new Point($wrapped_tx, $ty);
-        if($map->isTileValid($tile, $zoom))
+        $offsetx = 0;
+        for($tx=$topleft_tile->x; $tx<=$bottomright_tile->x; $tx++)
         {
-            $imgblob = $tileservice->fetchTile($tile->x, $tile->y, $zoom);
-            $tileimage = new \Imagick();
-            $tileimage->readImageBlob($imgblob);
-            $mapimage->compositeImage($tileimage, \Imagick::COMPOSITE_COPY, $offsetx, $offsety, \Imagick::CHANNEL_ALL);
+            // wrap tiles along longitude
+            $wrapped_tx = ($tx + $ntiles)  % $ntiles;
+            $tile = new Point($wrapped_tx, $ty);
+            if($map->isTileValid($tile, $zoom))
+            {
+                $imgblob = $tileservice->fetchTile($tile->x, $tile->y, $zoom);
+                if($imgblob != null)
+                {
+                    $tileimage = new \Imagick();
+                    $tileimage->readImageBlob($imgblob);
+                    $mapimage->compositeImage($tileimage, \Imagick::COMPOSITE_COPY, $offsetx, $offsety, \Imagick::CHANNEL_ALL);
+                    $tileimage->clear();
+                }
+            }
+            $offsetx += $map->getTileSize();
         }
-        $offsetx += $map->getTileSize();
+        $offsety += $map->getTileSize();
     }
-    $offsety += $map->getTileSize();
+
+    $crop_offsetx = intval($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x);
+    $crop_offsety = intval($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y);
+    $mapimage->cropImage($render_width, $render_height, $crop_offsetx, $crop_offsety);
+    return $mapimage;
 }
 
 
-$crop_offsetx = intval($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x);
-$crop_offsety = intval($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y);
 
-$mapimage->cropImage($render_width, $render_height, $crop_offsetx, $crop_offsety);
 
+$lat = 63.8283;
+$lon = 20.2617;
+$zoom = 6;
+$render_width = 1200;
+$render_height = 400;
+
+$mapimage = renderMap($lat, $lon, $zoom, $render_width, $render_height);
 $mapimage->writeImage("map.png");
+$mapimage->clear();
+
 
 /*
 $tile = $map->getTile($cp_pixel, $zoom);
