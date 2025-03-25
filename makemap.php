@@ -12,7 +12,7 @@ use \geop\TileService;
 use \geop\TileCache;
 
 
-function renderMap($lat, $lon, $zoom, $render_width, $render_height)
+function renderMap($lat, $lon, $zoom, $render_width, $render_height, $tileservice)
 {
     $cp = new LatLon($lat, $lon);
     $map = new Map(new CRS_EPSG3857());
@@ -25,12 +25,6 @@ function renderMap($lat, $lon, $zoom, $render_width, $render_height)
     // Note! These tile coordinates can be outside map bounds, negative or >= getNumTiles
     $topleft_tile = $map->getTile($topleft_pixel, $zoom);
     $bottomright_tile = $map->getTile($bottomright_pixel, $zoom);
-
-    $cachedir = __DIR__."/tilecache";
-    $tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new TileCache('osm', $cachedir));
-    //$tileservice = new TileService( "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_imagery', $cachedir));
-    //$tileservice = new TileService("arcgis_world_street", "https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}");
-    //$tileservice = new TileService("arcgis_world_topo", "https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}");
 
     // This is the image wisth of all the tiles fitting completely
     // then it will be cropped to render width and size
@@ -100,9 +94,16 @@ $lat = 53.5504683;
 $lon = 9.9946400;
 $zoom = 17;
 $render_width = 1200;
-$render_height = 400;
+$render_height = 800;
 
-$mapimage = renderMap($lat, $lon, $zoom, $render_width, $render_height);
+$cachedir = __DIR__."/tilecache";
+$tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new TileCache('osm', $cachedir));
+//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_imagery', $cachedir));
+//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_street', $cachedir));
+//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_topo', $cachedir));
+
+
+$mapimage = renderMap($lat, $lon, $zoom, $render_width, $render_height, $tileservice);
 $mapimage->writeImage("map.png");
 $mapimage->clear();
 
