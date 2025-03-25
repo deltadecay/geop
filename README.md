@@ -52,3 +52,8 @@ The file **[example/makemap.php](example/makemap.php)** contains a simple demo a
 Developed in php and tested in 5.6, 8.2 and 8.4. Imagick extension is needed to use the
 **ImagickFactory**. See the interface **[ImageFactory](src/imagefactory.php)** for what to implement for a custom
 image factory.
+
+
+## Tests
+
+To run the tests you need [pest](https://github.com/deltadecay/pest) installed parallel to *geop*.

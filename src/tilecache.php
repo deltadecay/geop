@@ -21,6 +21,7 @@ function join_paths(...$args)
 
 interface TileCache
 {
+    public function setFormat($format);
     public function hasTile($x, $y, $z);
     public function loadTile($x, $y, $z);
     public function saveTile($x, $y, $z, $blob);
