@@ -1,6 +1,6 @@
 <?php
 
-namespace MakeMapApp; 
+namespace MakeMapApp;
 
 require_once(__DIR__."/geop.php");
 
@@ -9,7 +9,7 @@ use \geop\CRS_EPSG3857;
 use \geop\LatLon;
 use \geop\Point;
 use \geop\TileService;
-
+use \geop\TileCache;
 
 
 function renderMap($lat, $lon, $zoom, $render_width, $render_height)
@@ -26,8 +26,9 @@ function renderMap($lat, $lon, $zoom, $render_width, $render_height)
     $topleft_tile = $map->getTile($topleft_pixel, $zoom);
     $bottomright_tile = $map->getTile($bottomright_pixel, $zoom);
 
-    $tileservice = new TileService("osm", "https://tile.openstreetmap.org/{z}/{x}/{y}.png");
-    //$tileservice = new TileService("arcgis_world_imagery", "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}");
+    $cachedir = __DIR__."/tilecache";
+    $tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new TileCache('osm', $cachedir));
+    //$tileservice = new TileService( "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_imagery', $cachedir));
     //$tileservice = new TileService("arcgis_world_street", "https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}");
     //$tileservice = new TileService("arcgis_world_topo", "https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}");
 
@@ -71,15 +72,33 @@ function renderMap($lat, $lon, $zoom, $render_width, $render_height)
     $crop_offsetx = intval($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x);
     $crop_offsety = intval($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y);
     $mapimage->cropImage($render_width, $render_height, $crop_offsetx, $crop_offsety);
+
+    // Marker and shadow
+    $marker_icon = new \Imagick();
+    if($marker_icon->readImage(__DIR__."/marker-icon.png"))
+    {
+        $marker_shadow = new \Imagick();
+        if($marker_shadow->readImage(__DIR__."/marker-shadow.png"))
+        {
+            // To position the shadow aligned with the marker, we must offset with the icon sizes
+            $x = intval($cp_pixel->x - $topleft_pixel->x - $marker_icon->getImageWidth()/2);
+            $y = intval($cp_pixel->y - $topleft_pixel->y - $marker_icon->getImageHeight());
+            $mapimage->compositeImage($marker_shadow, \Imagick::COMPOSITE_SRCOVER, $x, $y, \Imagick::CHANNEL_ALL);
+        }
+        $x = intval($cp_pixel->x - $topleft_pixel->x - $marker_icon->getImageWidth()/2);
+        $y = intval($cp_pixel->y - $topleft_pixel->y - $marker_icon->getImageHeight());
+        $mapimage->compositeImage($marker_icon, \Imagick::COMPOSITE_SRCOVER, $x, $y, \Imagick::CHANNEL_ALL);
+    }
+
     return $mapimage;
 }
 
 
 
 
-$lat = 63.8283;
-$lon = 20.2617;
-$zoom = 6;
+$lat = 53.5504683;
+$lon = 9.9946400;
+$zoom = 17;
 $render_width = 1200;
 $render_height = 400;
 

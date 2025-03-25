@@ -10,9 +10,10 @@ class TileCache
     private $cachedir = "tilecache";
     private $format = '';
 
-    public function __construct($name='tileservice')
+    public function __construct($name='tileservice', $cachedir = "tilecache")
     {
         $this->name = $name;
+        $this->cachedir = $cachedir;
     }
 
     public function setFormat($format)

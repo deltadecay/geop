@@ -9,14 +9,16 @@ require_once(__DIR__."/tilecache.php");
 class TileService
 {
     private $urltemplate = '';
-    private $name = '';
     private $cache = null;
 
-    public function __construct($name, $urltemplate)
+    public function __construct($urltemplate, $cache = null)
     {
-        $this->name = $name;
         $this->urltemplate = $urltemplate;
-        $this->cache = new TileCache($name);
+        if($cache == null)
+        {
+            $cache = new TileCache();
+        }
+        $this->cache = $cache;
     }
 
 
@@ -36,11 +38,8 @@ class TileService
             return $this->cache->loadTile($x, $y, $z);
         }
 
-
-
         $headers = [
             "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15",
-
         ];
         echo "Fetch from $url\n";
         $res = http_get($url , $headers);
@@ -51,25 +50,7 @@ class TileService
             $blob = $res['body'];
             $mimetype = isset($res['headers']['content-type']) ? $res['headers']['content-type'][0] : '';
             //$etag = isset($res['headers']['etag']) ? $res['headers']['etag'][0] : '';
-
-            /*
-            if(strlen($format) == 0 && strlen($mimetype) > 0)
-            {
-                // If no format from url, try reading from the content-type mimetype
-                unset($matches);
-                //if(preg_match("/^(application|audio|example|image|message|model|multipart|text|video)\/(x(?=[-\.])|(?:prs|vnd)+(?=\.))?(?:(?!x)[-\.])?([^\s]+?)(?:\+(xml|json|ber|der|fastinfoset|wbxml|zip|cbor))?$/", "image/png", $matches) > 0)
-                if(preg_match("/^image\/(x(?=[-\.])|(?:prs|vnd)+(?=\.))?(?:(?!x)[-\.])?([^\s]+?)(?:\+(xml|json|ber|der|fastinfoset|wbxml|zip|cbor))?$/", $mimetype, $matches) > 0)
-                {
-                    // prefix: x-, x., vnd., prs.
-                    $prefix = $matches[1];
-                    $format = $matches[2];
-                    // example svg+xml
-                    $afterplus = count($matches)>3 ? $matches[3] : '';
-                }
-            }
-            */
-            echo "Save to cache\n";
-            
+            echo "Save to cache\n";            
             $this->cache->saveTile($x, $y, $z, $blob);
         }
         else
