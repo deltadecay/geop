@@ -15,7 +15,7 @@ use \geop\ImagickFactory;
 
 $latlon = new LatLon(53.5504683, 9.9946400);
 //$latlon = new LatLon(-16.79994, 179.99275);
-$zoom = 16;
+$zoom = 17;
 $render_width = 1200;
 $render_height = 400;
 
@@ -26,7 +26,7 @@ $tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 //$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_topo', $cachedir));
 $map = new Map(new CRS_EPSG3857());
 $map->setTileSize(256);
-$imgfactory = new ImagickFactory();
+$imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
 $renderer = new MapRenderer($map, $tileservice, $imgfactory);
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
@@ -53,7 +53,6 @@ if($mapimage != null && $imgfactory != null)
         $imgfactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
     }
 
-    $mapimage->setImageFormat('webp');
-    $mapimage->writeImage("map.webp");
-    $mapimage->clear();
+    $imgfactory->saveImageToFile($mapimage, "map.webp", "webp");
+    $imgfactory->clearImage($mapimage);
 }

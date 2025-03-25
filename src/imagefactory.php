@@ -15,6 +15,8 @@ interface ImageFactory
     public function clearImage($image);
 
     public function getImageSize($image);
+
+    public function saveImageToFile($image, $filename, $format);
 }
 
 
@@ -86,6 +88,20 @@ class ImagickFactory implements ImageFactory
             return [$image->getImageWidth(), $image->getImageHeight()];
         }
         return null;
+    }
+
+    public function saveImageToFile($image, $filename, $format = '')
+    {
+        if($image != null)
+        {
+            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            if(strlen($ext) > 0 && strlen($format) == 0)
+            {
+                $format = $ext;
+            }
+            $image->setImageFormat($format);
+            $image->writeImage($filename);        
+        }
     }
 }
     
