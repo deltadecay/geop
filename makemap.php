@@ -15,7 +15,7 @@ use \geop\ImagickFactory;
 
 $latlon = new LatLon(53.5504683, 9.9946400);
 //$latlon = new LatLon(-16.79994, 179.99275);
-$zoom = 19;
+$zoom = 16;
 $render_width = 1200;
 $render_height = 400;
 
@@ -39,16 +39,17 @@ if($mapimage != null && $imgfactory != null)
     $marker_icon = $imgfactory->newImageFromFile(__DIR__."/marker-icon.png");
     if($marker_icon != null)
     {
+        list($mw, $mh) = $imgfactory->getImageSize($marker_icon);
         $marker_shadow = $imgfactory->newImageFromFile(__DIR__."/marker-shadow.png");
         if($marker_shadow != null)
         {
             // To position the shadow aligned with the marker, we must offset with the icon sizes
-            $x = intval($pos->x - $marker_icon->getImageWidth()/2);
-            $y = intval($pos->y- $marker_icon->getImageHeight());
+            $x = intval($pos->x - $mw/2);
+            $y = intval($pos->y - $mh);
             $imgfactory->drawImageIntoImage($mapimage, $marker_shadow, $x, $y);
         }
-        $x = intval($pos->x- $marker_icon->getImageWidth()/2);
-        $y = intval($pos->y - $marker_icon->getImageHeight());
+        $x = intval($pos->x- $mw/2);
+        $y = intval($pos->y - $mh);
         $imgfactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
     }
 

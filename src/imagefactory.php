@@ -13,6 +13,8 @@ interface ImageFactory
     public function cropImage($image, $width, $height, $offsetx, $offsety);
 
     public function clearImage($image);
+
+    public function getImageSize($image);
 }
 
 
@@ -75,6 +77,15 @@ class ImagickFactory implements ImageFactory
         {
             $image->clear();
         }
+    }
+
+    public function getImageSize($image)
+    {
+        if($image != null)
+        {
+            return [$image->getImageWidth(), $image->getImageHeight()];
+        }
+        return null;
     }
 }
     

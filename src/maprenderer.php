@@ -32,18 +32,16 @@ class MapRenderer
         {
             throw new \Exception("Tile service not provided");
         }
-        $cp = $latlon;
-        $cp_pixel = $map->latLonToMap($cp, $zoom);
+        $cp_pixel = $map->latLonToMap($latlon, $zoom);
         $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
         $bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
-    
-        //$cp_tile = $map->getTile($cp_pixel, $zoom);
+
         // Note! These tile coordinates can be outside map bounds, negative or >= getNumTiles
         $topleft_tile = $map->getTile($topleft_pixel, $zoom);
         $bottomright_tile = $map->getTile($bottomright_pixel, $zoom);
     
-        // This is the image wisth of all the tiles fitting completely
-        // then it will be cropped to render width and size
+        // This is the image with all the tiles fitting completely
+        // Later it will be cropped to render width and height
         $mapimgwidth = $map->getTileSize() * ($bottomright_tile->x - $topleft_tile->x + 1);
         $mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
     
