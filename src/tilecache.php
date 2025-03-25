@@ -4,6 +4,20 @@ namespace geop;
 
 require_once(__DIR__."/http.php");
 
+
+function join_paths(...$args) 
+{
+    $paths = [];
+    foreach($args as $arg) 
+    {
+        if ($arg !== '') 
+        { 
+            $paths[] = $arg; 
+        }
+    }
+    return preg_replace('#/+#','/',join('/', $paths));
+}
+
 class TileCache
 {
     private $name;
@@ -23,13 +37,13 @@ class TileCache
 
     private function getTilePath($x, $y, $z)
     {
-        $path = $this->cachedir . "/" . $this->name . "/$z/$x/";
+        $path = join_paths($this->cachedir, $this->name, "$z", "$x");
         return $path;
     }
 
     private function getTilePathFilename($x, $y, $z)
     {
-        $file = $this->getTilePath($x, $y, $z) . "$y";
+        $file = join_paths($this->getTilePath($x, $y, $z), "$y");
         if(strlen($this->format) > 0)
         {
             $file .= "." . $this->format;

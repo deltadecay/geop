@@ -19,7 +19,7 @@ $zoom = 17;
 $render_width = 1200;
 $render_height = 400;
 
-$cachedir = __DIR__."/tilecache";
+$cachedir = __DIR__."/tilecache/";
 $tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new TileCache('osm', $cachedir));
 //$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_imagery', $cachedir));
 //$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_street', $cachedir));
