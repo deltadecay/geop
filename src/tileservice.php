@@ -16,7 +16,7 @@ class TileService
         $this->urltemplate = $urltemplate;
         if($cache == null)
         {
-            $cache = new TileCache();
+            $cache = new FileTileCache();
         }
         $this->cache = $cache;
     }

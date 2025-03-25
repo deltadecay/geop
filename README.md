@@ -18,7 +18,7 @@ use \geop\LatLon;
 use \geop\Map;
 use \geop\CRS_EPSG3857;
 use \geop\TileService;
-use \geop\TileCache;
+use \geop\FileTileCache;
 use \geop\MapRenderer;
 use \geop\ImagickFactory;
 
@@ -26,7 +26,7 @@ $latlon = new LatLon(41.381073, 2.173224);
 $zoom = 5;
 
 $tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", 
-                            new TileCache('osm'));
+                            new FileTileCache('osm'));
 
 $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels

@@ -8,7 +8,7 @@ use \geop\LatLon;
 use \geop\Map;
 use \geop\CRS_EPSG3857;
 use \geop\TileService;
-use \geop\TileCache;
+use \geop\FileTileCache;
 use \geop\MapRenderer;
 use \geop\ImagickFactory;
 
@@ -19,10 +19,10 @@ $render_width = 640;
 $render_height = 400;
 
 $cachedir = __DIR__."/tilecache/";
-$tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new TileCache('osm', $cachedir));
-//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_imagery', $cachedir));
-//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_street', $cachedir));
-//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_topo', $cachedir));
+$tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new FileTileCache('osm', $cachedir));
+//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new FileTileCache('arcgis_world_imagery', $cachedir));
+//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", new FileTileCache('arcgis_world_street', $cachedir));
+//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", new FileTileCache('arcgis_world_topo', $cachedir));
 $map = new Map(new CRS_EPSG3857());
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;

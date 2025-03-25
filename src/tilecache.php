@@ -18,7 +18,15 @@ function join_paths(...$args)
     return preg_replace('#/+#','/',join('/', $paths));
 }
 
-class TileCache
+
+interface TileCache
+{
+    public function hasTile($x, $y, $z);
+    public function loadTile($x, $y, $z);
+    public function saveTile($x, $y, $z, $blob);
+}
+
+class FileTileCache implements TileCache
 {
     private $name;
     private $cachedir = "tilecache";
