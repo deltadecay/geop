@@ -23,6 +23,7 @@ class MapRenderer
 
     public function renderMap(LatLon $latlon, $zoom, $render_width=640, $render_height=480, $bgcolor = '#7f7f7f')
     {
+        $zoom = intval($zoom);
         $map = $this->map;
         if($map == null)
         {
@@ -31,6 +32,10 @@ class MapRenderer
         if($this->tileservice == null)
         {
             throw new \Exception("Tile service not provided");
+        }
+        if($zoom < 0 || $zoom > 19)
+        {
+            throw new \Exception("Valid valus of zoom are in the range [0,19]");
         }
         $cp_pixel = $map->latLonToMap($latlon, $zoom);
         $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
