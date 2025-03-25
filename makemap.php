@@ -10,12 +10,12 @@ use \geop\CRS_EPSG3857;
 use \geop\TileService;
 use \geop\TileCache;
 use \geop\MapRenderer;
-
+use \geop\ImagickFactory;
 
 
 $latlon = new LatLon(53.5504683, 9.9946400);
 //$latlon = new LatLon(-16.79994, 179.99275);
-$zoom = 10;
+$zoom = 19;
 $render_width = 1200;
 $render_height = 400;
 
@@ -26,31 +26,33 @@ $tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 //$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", new TileCache('arcgis_world_topo', $cachedir));
 $map = new Map(new CRS_EPSG3857());
 $map->setTileSize(256);
+$imgfactory = new ImagickFactory();
+$renderer = new MapRenderer($map, $tileservice, $imgfactory);
 
-$renderer = new MapRenderer($map, $tileservice);
+$output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
+$mapimage = $output['image'];
+$pos = $output['pos']; 
 
-$render = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
-$mapimage = $render['map'];
-$pos = $render['pos']; 
-
-// Marker and shadow
-$marker_icon = new \Imagick();
-if($marker_icon->readImage(__DIR__."/marker-icon.png"))
+if($mapimage != null && $imgfactory != null)
 {
-    $marker_shadow = new \Imagick();
-    if($marker_shadow->readImage(__DIR__."/marker-shadow.png"))
+    // Marker and shadow
+    $marker_icon = $imgfactory->newImageFromFile(__DIR__."/marker-icon.png");
+    if($marker_icon != null)
     {
-        // To position the shadow aligned with the marker, we must offset with the icon sizes
-        $x = intval($pos->x - $marker_icon->getImageWidth()/2);
-        $y = intval($pos->y- $marker_icon->getImageHeight());
-        $mapimage->compositeImage($marker_shadow, \Imagick::COMPOSITE_SRCOVER, $x, $y, \Imagick::CHANNEL_ALL);
+        $marker_shadow = $imgfactory->newImageFromFile(__DIR__."/marker-shadow.png");
+        if($marker_shadow != null)
+        {
+            // To position the shadow aligned with the marker, we must offset with the icon sizes
+            $x = intval($pos->x - $marker_icon->getImageWidth()/2);
+            $y = intval($pos->y- $marker_icon->getImageHeight());
+            $imgfactory->drawImageIntoImage($mapimage, $marker_shadow, $x, $y);
+        }
+        $x = intval($pos->x- $marker_icon->getImageWidth()/2);
+        $y = intval($pos->y - $marker_icon->getImageHeight());
+        $imgfactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
     }
-    $x = intval($pos->x- $marker_icon->getImageWidth()/2);
-    $y = intval($pos->y - $marker_icon->getImageHeight());
-    $mapimage->compositeImage($marker_icon, \Imagick::COMPOSITE_SRCOVER, $x, $y, \Imagick::CHANNEL_ALL);
+
+    $mapimage->setImageFormat('webp');
+    $mapimage->writeImage("map.webp");
+    $mapimage->clear();
 }
-
-$mapimage->setImageFormat('webp');
-$mapimage->writeImage("map.webp");
-$mapimage->clear();
-

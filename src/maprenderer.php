@@ -3,6 +3,7 @@
 namespace geop;
 
 require_once(__DIR__."/tileservice.php");
+require_once(__DIR__."/imagefactory.php");
 
 use \geop\LatLon;
 use \geop\Point;
@@ -11,11 +12,13 @@ class MapRenderer
 {
     private $tileservice;
     private $map;
+    private $imagefactory = null;
 
-    public function __construct($map, $tileservice)
+    public function __construct($map, $tileservice, $imagefactory)
     {
         $this->map = $map;
         $this->tileservice = $tileservice;
+        $this->imagefactory = $imagefactory;
     }
 
     public function renderMap(LatLon $latlon, $zoom, $render_width=640, $render_height=480, $bgcolor = '#7f7f7f')
@@ -44,9 +47,12 @@ class MapRenderer
         $mapimgwidth = $map->getTileSize() * ($bottomright_tile->x - $topleft_tile->x + 1);
         $mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
     
-        $mapimage = new \Imagick();
-        $mapimage->newImage($mapimgwidth, $mapimgheight, new \ImagickPixel($bgcolor));
-    
+        $mapimage = null;
+        if ($this->imagefactory != null)
+        {
+            $mapimage = $this->imagefactory->newImage($mapimgwidth, $mapimgheight, $bgcolor);
+        }
+
         $ntiles = $map->getNumTiles($zoom);
     
         // Fetch and compose tiles into the map image
@@ -62,12 +68,11 @@ class MapRenderer
                 if($map->isTileValid($tile, $zoom))
                 {
                     $imgblob = $this->tileservice->fetchTile($tile->x, $tile->y, $zoom);
-                    if($imgblob != null)
+                    if($imgblob != null && $this->imagefactory != null)
                     {
-                        $tileimage = new \Imagick();
-                        $tileimage->readImageBlob($imgblob);
-                        $mapimage->compositeImage($tileimage, \Imagick::COMPOSITE_COPY, $offsetx, $offsety, \Imagick::CHANNEL_ALL);
-                        $tileimage->clear();
+                        $tileimage = $this->imagefactory->newImageFromBlob($imgblob);
+                        $this->imagefactory->drawImageIntoImage($mapimage, $tileimage, $offsetx, $offsety);
+                        $this->imagefactory->clearImage($tileimage);
                     }
                 }
                 $offsetx += $map->getTileSize();
@@ -77,12 +82,15 @@ class MapRenderer
     
         $crop_offsetx = intval($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x);
         $crop_offsety = intval($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y);
-        $mapimage->cropImage($render_width, $render_height, $crop_offsetx, $crop_offsety);
-    
+        if ($this->imagefactory != null)
+        {
+            $this->imagefactory->cropImage($mapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
+        }
+
         $x = $cp_pixel->x - $topleft_pixel->x;
         $y = $cp_pixel->y - $topleft_pixel->y;
     
-        return ['map' => $mapimage, 'pos' => new Point($x, $y)];
+        return ['image' => $mapimage, 'pos' => new Point($x, $y)];
     }
 }
 
