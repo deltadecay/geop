@@ -67,12 +67,14 @@ class FileTileCache implements TileCache
 
     public function loadTile($x, $y, $z)
     {
+        //echo "Load from cache\n";
         $file = $this->getTilePathFilename($x, $y, $z);
         return file_get_contents($file);
     }
 
     public function saveTile($x, $y, $z, $blob)
     {
+        //echo "Save to cache\n";
         $path = $this->getTilePath($x, $y, $z);
         if(!is_dir($path))
         {

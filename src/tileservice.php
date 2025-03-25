@@ -10,6 +10,7 @@ class TileService
 {
     private $urltemplate = '';
     private $cache = null;
+    private $useragent = 'TileService';
 
     public function __construct($urltemplate, $cache = null)
     {
@@ -21,6 +22,10 @@ class TileService
         $this->cache = $cache;
     }
 
+    public function setUserAgent($useragent)
+    {
+        $this->useragent = $useragent;
+    }
 
     public function fetchTile($x, $y, $z)
     {
@@ -34,14 +39,13 @@ class TileService
 
         if($this->cache->hasTile($x, $y, $z))
         {
-            echo "Load from cache\n";
             return $this->cache->loadTile($x, $y, $z);
         }
 
         $headers = [
-            "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15",
+            "User-Agent: " . $this->useragent,
         ];
-        echo "Fetch from $url\n";
+        //echo "Fetch from $url\n";
         $res = http_get($url , $headers);
 
         $blob = null;
@@ -50,7 +54,7 @@ class TileService
             $blob = $res['body'];
             $mimetype = isset($res['headers']['content-type']) ? $res['headers']['content-type'][0] : '';
             //$etag = isset($res['headers']['etag']) ? $res['headers']['etag'][0] : '';
-            echo "Save to cache\n";            
+                      
             $this->cache->saveTile($x, $y, $z, $blob);
         }
         else
