@@ -2,7 +2,7 @@
 
 namespace MakeMapApp;
 
-require_once(__DIR__."/geop.php");
+require_once(__DIR__."/../geop.php");
 
 use \geop\LatLon;
 use \geop\Map;
@@ -13,10 +13,9 @@ use \geop\MapRenderer;
 use \geop\ImagickFactory;
 
 
-$latlon = new LatLon(53.5504683, 9.9946400);
-//$latlon = new LatLon(-16.79994, 179.99275);
-$zoom = 17;
-$render_width = 1200;
+$latlon = new LatLon(41.381073, 2.173224);
+$zoom = 5;
+$render_width = 640;
 $render_height = 400;
 
 $cachedir = __DIR__."/tilecache/";
@@ -36,11 +35,11 @@ $pos = $output['pos'];
 if($mapimage != null && $imgfactory != null)
 {
     // Marker and shadow
-    $marker_icon = $imgfactory->newImageFromFile(__DIR__."/marker-icon.png");
+    $marker_icon = $imgfactory->newImageFromFile(__DIR__."/../assets/marker-icon.png");
     if($marker_icon != null)
     {
         list($mw, $mh) = $imgfactory->getImageSize($marker_icon);
-        $marker_shadow = $imgfactory->newImageFromFile(__DIR__."/marker-shadow.png");
+        $marker_shadow = $imgfactory->newImageFromFile(__DIR__."/../assets/marker-shadow.png");
         if($marker_shadow != null)
         {
             // To position the shadow aligned with the marker, we must offset with the icon sizes
@@ -53,6 +52,7 @@ if($mapimage != null && $imgfactory != null)
         $imgfactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
     }
 
-    $imgfactory->saveImageToFile($mapimage, "map.webp", "webp");
+    $imgfactory->saveImageToFile($mapimage, __DIR__."/map.webp");
     $imgfactory->clearImage($mapimage);
 }
+
