@@ -35,7 +35,7 @@ class MapRenderer
         }
         if($zoom < 0 || $zoom > 19)
         {
-            throw new \Exception("Valid valus of zoom are in the range [0,19]");
+            throw new \Exception("Valid values of zoom are in the range [0,19]");
         }
         $cp_pixel = $map->latLonToMap($latlon, $zoom);
         $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
@@ -56,9 +56,15 @@ class MapRenderer
             $mapimage = $this->imagefactory->newImage($mapimgwidth, $mapimgheight, $bgcolor);
         }
 
+        // This is the size of the map in valid tiles
         $ntiles = $map->getNumTiles($zoom);
-    
-        // Fetch and compose tiles into the map image
+        // but the tiles we iterate over can be negative
+        // but we want to wrap all negative tiles to valid tiles along longitude
+        // tmulx is the value to add to any negative tile before modulo to get
+        // a valid tile, in the range [0, ntiles-1] (see below)
+        $tmulx = intval(abs($topleft_tile->x)) * $ntiles;
+
+        // Fetch and compose tiles into the map image row by row
         $offsety = 0;
         for($ty=$topleft_tile->y; $ty<=$bottomright_tile->y; $ty++)
         {
@@ -66,7 +72,7 @@ class MapRenderer
             for($tx=$topleft_tile->x; $tx<=$bottomright_tile->x; $tx++)
             {
                 // wrap tiles along longitude
-                $wrapped_tx = ($tx + $ntiles)  % $ntiles;
+                $wrapped_tx = ($tx + $tmulx) % $ntiles;
                 $tile = new Point($wrapped_tx, $ty);
                 if($map->isTileValid($tile, $zoom))
                 {
