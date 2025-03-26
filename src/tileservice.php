@@ -50,9 +50,18 @@ class TileService
 
     protected function getHeaders(Map $map, Point $tile, $zoom)
     {
-        $headers = [
-            "User-Agent: " . $this->useragent,
-        ];  
+        $headers = [];
+        if(strlen($this->useragent) > 0)
+        {
+            $headers[] = "User-Agent: " . $this->useragent;
+        } 
+        if(isset($this->options['headers']) && is_array($this->options['headers']))
+        {
+            foreach($this->options['headers'] as $key => $value)
+            {
+                $headers[] = "$key: $value";
+            }
+        }
         return $headers;
     }
 
@@ -79,6 +88,7 @@ class TileService
         
         if($debug) 
             echo "Fetch /$z/$x/$y from $url\n";
+
         $res = http_get($url , $headers);
 
         $blob = null;
