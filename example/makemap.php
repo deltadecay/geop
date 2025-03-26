@@ -8,6 +8,7 @@ use \geop\LatLon;
 use \geop\Map;
 use \geop\CRS_EPSG3857;
 use \geop\TileService;
+use \geop\WMSTileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
 use \geop\ImagickFactory;
@@ -19,13 +20,23 @@ $render_width = 640;
 $render_height = 400;
 
 $cachedir = __DIR__."/tilecache/";
-$tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", new FileTileCache('osm', $cachedir));
-//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", new FileTileCache('arcgis_world_imagery', $cachedir));
-//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", new FileTileCache('arcgis_world_street', $cachedir));
-//$tileservice = new TileService("https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", new FileTileCache('arcgis_world_topo', $cachedir));
+//$tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}/{y}.png"], new FileTileCache('osm', $cachedir));
+//$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_imagery', $cachedir));
+//$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_street', $cachedir));
+//$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_topo', $cachedir));
+
+// See layers in the xml at https://ows.mundialis.de/services/service?request=GetCapabilities
+$tileservice = new WMSTileService([
+    "url" => "https://ows.mundialis.de/services/service",
+    "layers" => "OSM-WMS",
+    //"debug" => true,
+    //"usecache" => false,
+    ], new FileTileCache('mundialis-osm', $cachedir));
+
 $tileservice->setUserAgent("MakeMapApp v1.0");
 
 $map = new Map(new CRS_EPSG3857());
+// OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
 $renderer = new MapRenderer($map, $tileservice, $imgfactory);

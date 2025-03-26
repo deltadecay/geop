@@ -4,17 +4,18 @@ namespace geop;
 
 require_once(__DIR__."/tileservice.php");
 require_once(__DIR__."/imagefactory.php");
+require_once(__DIR__."/map.php");
 
 use \geop\LatLon;
 use \geop\Point;
 
 class MapRenderer
 {
-    private $tileservice;
-    private $map;
-    private $imagefactory = null;
+    protected $tileservice = null;
+    protected $map = null;
+    protected $imagefactory = null;
 
-    public function __construct($map, $tileservice, $imagefactory)
+    public function __construct(Map $map, TileService $tileservice, ImageFactory $imagefactory)
     {
         $this->map = $map;
         $this->tileservice = $tileservice;
@@ -76,7 +77,7 @@ class MapRenderer
                 $tile = new Point($wrapped_tx, $ty);
                 if($map->isTileValid($tile, $zoom))
                 {
-                    $imgblob = $this->tileservice->fetchTile($tile->x, $tile->y, $zoom);
+                    $imgblob = $this->tileservice->fetchMapTile($map, $tile, $zoom);
                     if($imgblob != null && $this->imagefactory != null)
                     {
                         $tileimage = $this->imagefactory->newImageFromBlob($imgblob);

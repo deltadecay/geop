@@ -7,9 +7,10 @@ require_once(__DIR__."/geometry.php");
 
 abstract class CRS
 {
-
-
-
+    public function getName()
+    {
+        return '';
+    }
 
     // Project a lat lon position to a location in the CRS
     public function project(LatLon $latlon)
@@ -92,6 +93,11 @@ class CRS_EPSG3857 extends Earth
 {
     const R = 6378137; // Earth equatorial radius
     const MAX_LATITUDE = 85.051128779807; // atan(sinh(M_PI))*180/M_PI;
+
+    public function getName()
+    {
+        return 'EPSG:3857';
+    }
 
     public function project(LatLon $latlon)
     {

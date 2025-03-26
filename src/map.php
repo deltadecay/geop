@@ -6,6 +6,7 @@ require_once(__DIR__."/crs.php");
 require_once(__DIR__."/geometry.php");
 
 
+// A tile map
 class Map 
 {
     private $tilesize = 256;
@@ -16,10 +17,16 @@ class Map
         $this->crs = $crs;
     }
 
+    public function getCrsName()
+    {
+        return $this->crs->getName();
+    }
+
     public function setTileSize($tilesize) 
     {
         $this->tilesize = intval($tilesize);
     }
+    
     public function getTileSize() 
     {
         return $this->tilesize;
@@ -37,27 +44,21 @@ class Map
     // This returns the tile for a specific map pixel
     public function getTile(Point $pixel, $zoom)
     {
-        //$ntiles = $this->getNumTiles($zoom);
         $tilesize = floatval($this->getTileSize());
         $tx = intval(floor($pixel->x / $tilesize));
         $ty = intval(floor($pixel->y / $tilesize));
         
-        /*
-        //if($tx < 0) $tx = 0;
-        //if($tx > $ntiles-1) $tx = $ntiles-1;
-        
-        // tiles in x wrap around
-        $tx = ($tx + $ntiles) % $ntiles;
-
-        if($ty < 0) $ty = 0;
-        if($ty > $ntiles-1) $ty = $ntiles-1;
-        */
         return new Point($tx, $ty);
     }
 
     public function getNumTiles($zoom)
     {
-        return pow(2, intval($zoom));
+        $zoom = intval($zoom);
+        if($zoom < 0 || $zoom > 19)
+        {
+            throw new \Exception("Valid values of zoom are in the range [0,19]");
+        }
+        return pow(2, $zoom);
     }
 
     // Map size in pixels at specified zoom level (0,1,2,...)
@@ -66,24 +67,67 @@ class Map
         return $this->tilesize * $this->getNumTiles($zoom);
     }
 
-
-    // Transform the lat lon position to a pixel position in the map
-    public function latLonToMap(LatLon $latlon, $zoom)
+    // Transform a point in the projected crs to pixel position in the map
+    public function crsToMap(Point $p, $zoom)
     {
-        $p = $this->crs->project($latlon);
         $mapsize = $this->mapSize($zoom);
         $m = $this->crs->crsToMapTransformation($mapsize);
         $pixel = $m->transform($p);
         return $pixel;
     }
 
-    // Transform a map pixel position to lat lon
-    public function mapToLatLon(Point $pixel, $zoom)
+    // Transform a map pixel position to a point in the projected crs
+    public function mapToCrs(Point $pixel, $zoom)
     {
         $mapsize = $this->mapSize($zoom);
         $m = $this->crs->mapToCrsTransformation($mapsize);
         $p = $m->transform($pixel);
+        return $p;
+    }
+
+    // Transform the lat lon position to a pixel position in the map
+    public function latLonToMap(LatLon $latlon, $zoom)
+    {
+        $p = $this->crs->project($latlon);
+        $pixel = $this->crsToMap($p, $zoom);
+        return $pixel;
+    }
+
+    // Transform a map pixel position to lat lon
+    public function mapToLatLon(Point $pixel, $zoom)
+    {
+        $p = $this->mapToCrs($pixel, $zoom);
         $latlon = $this->crs->unproject($p);
         return $latlon;
+    }
+
+    // The tile bounds in map pixel coordinates
+    // returns array with top-left and bottom-right corner.
+    public function getTileMapBounds(Point $tile, $zoom)
+    {
+        $tilesize = floatval($this->getTileSize());
+        $topleft = new Point($tile->x * $tilesize, $tile->y * $tilesize);
+        $bottomright = new Point(($tile->x + 1) * $tilesize, ($tile->y + 1) * $tilesize);
+        return [$topleft, $bottomright];
+    }
+
+    // The tile bounds in the projected crs coordinates
+    // returns array with top-left and bottom-right corner.
+    public function getTileCrsBounds(Point $tile, $zoom)
+    {
+        list($tl, $br) = $this->getTileMapBounds($tile, $zoom);
+        $topleft = $this->mapToCrs($tl, $zoom);
+        $bottomright = $this->mapToCrs($br, $zoom);
+        return [$topleft, $bottomright];
+    }
+
+    // The tile bounds in lat lon coordinates
+    // returns array with top-left and bottom-right corner.
+    public function getTileLatLonBounds(Point $tile, $zoom)
+    {
+        list($tl, $br) = $this->getTileMapBounds($tile, $zoom);
+        $topleft = $this->mapToLatLon($tl, $zoom);
+        $bottomright = $this->mapToLatLon($br, $zoom);
+        return [$topleft, $bottomright];
     }
 }

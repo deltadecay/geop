@@ -4,17 +4,23 @@ namespace geop;
 
 require_once(__DIR__."/http.php");
 require_once(__DIR__."/tilecache.php");
+require_once(__DIR__."/map.php");
+require_once(__DIR__."/geometry.php");
 
 
 class TileService
 {
-    private $urltemplate = '';
-    private $cache = null;
-    private $useragent = 'TileService';
+    protected $options = [];
+    protected $cache = null;
+    protected $useragent = 'TileService';
 
-    public function __construct($urltemplate, $cache = null)
+    public function __construct($options, $cache = null)
     {
-        $this->urltemplate = $urltemplate;
+        $this->options = $options;
+        if(!isset($options['url']) || strlen($options['url']) == 0)
+        {
+            throw new \Exception("options has no url defined.");
+        }
         if($cache == null)
         {
             $cache = new FileTileCache();
@@ -27,25 +33,52 @@ class TileService
         $this->useragent = $useragent;
     }
 
-    public function fetchTile($x, $y, $z)
+    protected function getImageFormat()
     {
-        $x = intval($x);
-        $y = intval($y);
-        $z = intval($z);
-        
-        $url = str_replace(['{x}', '{y}', '{z}'], [$x, $y, $z], $this->urltemplate);
-        $format = pathinfo($url, PATHINFO_EXTENSION);
-        $this->cache->setFormat($format);
+        $format = pathinfo($this->options['url'], PATHINFO_EXTENSION);
+        return $format;
+    }
 
-        if($this->cache->hasTile($x, $y, $z))
+    protected function getUrl(Map $map, Point $tile, $zoom)
+    {
+        $x = intval($tile->x);
+        $y = intval($tile->y);
+        $z = intval($zoom);
+        $url = str_replace(['{x}', '{y}', '{z}'], [$x, $y, $z],$this->options['url']);
+        return $url;
+    }
+
+    protected function getHeaders(Map $map, Point $tile, $zoom)
+    {
+        $headers = [
+            "User-Agent: " . $this->useragent,
+        ];  
+        return $headers;
+    }
+
+    public function fetchMapTile(Map $map, Point $tile, $zoom)
+    {
+        $x = intval($tile->x);
+        $y = intval($tile->y);
+        $z = intval($zoom);
+        
+        $debug = isset($this->options['debug']) ? !!$this->options['debug'] : false;
+        $usecache = isset($this->options['usecache']) ? !!$this->options['usecache'] : true;
+
+        $this->cache->setFormat($this->getImageFormat());
+
+        if($this->cache->hasTile($x, $y, $z) && $usecache)
         {
+            if($debug) 
+                echo "Load /$z/$x/$y from cache\n";
             return $this->cache->loadTile($x, $y, $z);
         }
 
-        $headers = [
-            "User-Agent: " . $this->useragent,
-        ];
-        //echo "Fetch from $url\n";
+        $url = $this->getUrl($map, $tile, $zoom);
+        $headers = $this->getHeaders($map, $tile, $zoom);
+        
+        if($debug) 
+            echo "Fetch /$z/$x/$y from $url\n";
         $res = http_get($url , $headers);
 
         $blob = null;
@@ -55,6 +88,8 @@ class TileService
             $mimetype = isset($res['headers']['content-type']) ? $res['headers']['content-type'][0] : '';
             //$etag = isset($res['headers']['etag']) ? $res['headers']['etag'][0] : '';
                       
+            if($debug) 
+                echo "Save /$z/$x/$y to cache\n";
             $this->cache->saveTile($x, $y, $z, $blob);
         }
         else
@@ -68,4 +103,79 @@ class TileService
 
 }
 
+class WMSTileService extends TileService
+{
+    protected function getImageFormat()
+    {
+        // Do not use file extension in the cache
+        return "";
+    }
 
+    protected function getUrl(Map $map, Point $tile, $zoom)
+    {
+        // WMS example:
+
+        // See layers in GetCapabilities
+        // https://ows.mundialis.de/services/service?request=GetCapabilities
+
+        // Tile example:
+        // https://ows.mundialis.de/services/service?&service=WMS&request=GetMap&layers=TOPO-OSM-WMS&styles=&format=image%2Fjpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG%3A3857&bbox=2504688.5428486555,6261721.357121641,3757032.814272984,7514065.628545967
+
+        list($tl, $br) = $map->getTileCrsBounds($tile, $zoom);
+
+        // Note! The bounding box is lower left and upper right
+        $bbox = $tl->x . "," . $br->y . "," . $br->x . "," .$tl->y;
+
+        $defaults = [
+            "service" => "WMS",
+            "request" => "GetMap",
+            "layers" => '',
+            "styles" => '',
+            "format" => "image/jpeg",
+            "transparent" => "false",
+            "version" => "1.1.1",
+            "width" => $map->getTileSize(),
+            "height" => $map->getTileSize(),
+            "srs" => $map->getCrsName(),
+            "bbox" => $bbox,
+        ];
+
+        $url = $this->options['url'];
+        $query = parse_url($url, PHP_URL_QUERY);
+        
+        // 1. Get query params from url
+        $urlparams = [];
+        if($query != null && strlen($query) > 0)
+        {
+            parse_str($query, $urlparams);
+        }
+
+        foreach($defaults as $key => $defvalue)
+        {
+            // 2. If options has the param, then use that instead of query param
+            if(array_key_exists($key, $this->options))
+            {
+                $urlparams[$key] = $this->options[$key];
+            }
+            // 3. If neither query or options has the param, then use defaults
+            if(!array_key_exists($key, $urlparams))
+            {
+                $urlparams[$key] = $defvalue;
+            }
+        }
+
+        if(strlen($urlparams['layers']) == 0)
+        {
+            throw new \Exception("layers has not been set for this WMS tile service");
+        }
+        
+        // Remove anything after ? in the url and append the new url params
+        $qpos = stripos($url, "?");
+        if($qpos !== false)
+        {
+            $url = substr($url, 0, $qpos);
+        }
+        $url .= "?" . http_build_query($urlparams);
+        return $url;
+    }
+}

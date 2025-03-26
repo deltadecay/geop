@@ -4,6 +4,7 @@ Working with maps in the spherical mercator model (crs EPSG:3857) in php.
 
 * Project/unproject lat/lon points
 * Render maps with tile providers such as OpenStreetMap
+* Render maps with WMS based services
 
 
 ## Example: Render a map image
@@ -25,7 +26,7 @@ use \geop\ImagickFactory;
 $latlon = new LatLon(41.381073, 2.173224);
 $zoom = 5;
 
-$tileservice = new TileService("https://tile.openstreetmap.org/{z}/{x}/{y}.png", 
+$tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}/{y}.png"], 
                             new FileTileCache('osm'));
 
 $map = new Map(new CRS_EPSG3857());
@@ -40,6 +41,17 @@ $imgfactory->saveImageToFile($output['image'], "assets/map1.webp");
 
 ![Map](assets/map1.webp)
 
+## WMS
+
+Web Map Services (WMS) can be used with the **[WMSTileService](src/tileservice.php)**. The url should point to the WMS service. Parameters can be set in the url as query parameters or in the options. Possible layer names can
+be fetched with the **GetCapabilities** request from the WMS url (request=GetCapabilities).
+
+```php
+$tileservice = new WMSTileService([
+    "url" => "https://ows.mundialis.de/services/service",
+    "layers" => "OSM-WMS",
+    ], new FileTileCache('mundiales-osm'));
+```
 
 
 ## Demo app makemap.php
