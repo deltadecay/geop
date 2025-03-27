@@ -50,7 +50,7 @@ be fetched with the **GetCapabilities** request from the WMS url (request=GetCap
 $tileservice = new WMSTileService([
     "url" => "https://ows.mundialis.de/services/service",
     "layers" => "OSM-WMS",
-    ], new FileTileCache('mundiales-osm'));
+    ], new FileTileCache('mundialis-osm'));
 ```
 
 
