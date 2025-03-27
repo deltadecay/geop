@@ -97,20 +97,71 @@ class TileService
             $blob = $res['body'];
             $mimetype = isset($res['headers']['content-type']) ? $res['headers']['content-type'][0] : '';
             //$etag = isset($res['headers']['etag']) ? $res['headers']['etag'][0] : '';
-                      
-            if($debug) 
-                echo "Save /$z/$x/$y to cache\n";
-            $this->cache->saveTile($x, $y, $z, $blob);
+              
+            $blobimgformat = $this->identifyBlobImageFormat($blob);
+            if($blobimgformat !== false)
+            {
+                if($debug) 
+                    echo "Save /$z/$x/$y to cache ($blobimgformat)\n";
+                $this->cache->saveTile($x, $y, $z, $blob);
+            }
+            else
+            {
+                if($debug)
+                {
+                    echo "Unknown image format\n";
+                    if(str_contains($mimetype, "text") ||
+                        str_contains($mimetype, "json") ||
+                        str_contains($mimetype, "html") ||
+                        str_contains($mimetype, "xml"))
+                    {
+                        echo $blob."\n";
+                    }
+                }
+                $blob = null;
+            }
         }
         else
         {
             //$res['httpcode']
             $error = $res['error'];
+            if($debug)
+                echo $res['httpcode']." ".$error."\n";
         }
 
         return $blob;
     }
 
+    // Try identifying the blob image format from the magic numbers
+    private function identifyBlobImageFormat($blob)
+    {
+        if(substr($blob, 0, 3) == pack("C3", 0xff, 0xd8, 0xff))
+            return 'jpg';
+        
+        if(substr($blob, 0, 8) == pack("C8", 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
+            return 'png';
+
+        if(substr($blob, 0, 4) == pack("C4", 0x52, 0x49, 0x46, 0x46) &&
+            substr($blob, 8, 4) == pack("C4", 0x57, 0x45, 0x42, 0x50))
+            return 'webp';
+
+        if(substr($blob, 0, 4) == pack("C4", 0x47, 0x49, 0x46, 0x38))
+            return 'gif';
+
+        if(substr($blob, 0, 2) == pack("C2", 0x42, 0x4d))
+            return 'bmp';
+        
+        if(substr($blob, 0, 4) == pack("C4", 0x4d, 0x4d, 0x00, 0x2a))
+            return 'tif';
+        if(substr($blob, 0, 4) == pack("C4", 0x4d, 0x4d, 0x00, 0x2b))
+            return 'tif';
+        if(substr($blob, 0, 4) == pack("C4", 0x49, 0x49, 0x2a, 0x00))
+            return 'tif';
+        if(substr($blob, 0, 4) == pack("C4", 0x49, 0x49, 0x2b, 0x00))
+            return 'tif';
+            
+        return false;
+    }
 }
 
 class WMSTileService extends TileService
