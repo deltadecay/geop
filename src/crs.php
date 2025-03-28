@@ -161,3 +161,42 @@ class CRS_EPSG3857 extends Earth
             Matrix::translation(-0.5*$mapsize, -0.5*$mapsize));
     }
 }
+
+
+
+
+class CRS_EPSG4326 extends Earth
+{
+    public function getName()
+    {
+        return 'EPSG:4326';
+    }
+
+    public function project(LatLon $latlon)
+    {
+        return new Point($latlon->lon, $latlon->lat);
+    }
+
+    public function unproject(Point $p)
+    {
+        return new LatLon($p->y, $p->x);
+    }
+
+
+    // Transformation matrix to transform from crs to map pixels [0,$mapsize)
+    public function crsToMapTransformation($mapsize)
+    {
+        $scale = $mapsize * 0.5 / 180.0;
+        return new Matrix($scale, 0, 0.5*$mapsize,
+                            0, -$scale, 0.5*$mapsize);
+    }
+
+    public function mapToCrsTransformation($mapsize)
+    {
+        // This is the inverse of crsToMapTransformation
+        $scale = 180 * 2 / $mapsize;
+        return Matrix::mul(
+            Matrix::scale($scale, -$scale),
+            Matrix::translation(-0.5*$mapsize, -0.5*$mapsize));
+    }
+}
