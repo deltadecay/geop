@@ -43,14 +43,20 @@ $imgfactory->saveImageToFile($output['image'], "assets/map1.webp");
 
 ## WMS
 
-Web Map Services (WMS) can be used with the **[WMSTileService](src/tileservice.php)**. The url should point to the WMS service. Parameters can be set in the url as query parameters or in the options. Possible layer names can
-be fetched with the **GetCapabilities** request from the WMS url (request=GetCapabilities).
+Web Map Services (WMS) can be used with the **[WMSTileService](src/tileservice.php)**. 
 
 ```php
+use \geop\WMSTileService;
+```
+
+The url should point to the WMS service. Parameters can be set in the url as query parameters or in the options. Possible layer names can be fetched with the **GetCapabilities** request from the WMS url (request=GetCapabilities).
+
+```php
+// https://www.terrestris.de/en/openstreetmap-wms/
 $tileservice = new WMSTileService([
-    "url" => "https://ows.mundialis.de/services/service",
+    "url" => "https://ows.terrestris.de/osm/service?",
     "layers" => "OSM-WMS",
-    ], new FileTileCache('mundialis-osm'));
+    ], new FileTileCache('terrestris-osm'));
 ```
 
 
