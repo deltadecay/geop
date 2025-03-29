@@ -89,6 +89,8 @@ class Earth extends CRS
 
 }
 
+
+// Pseudo Mercator projection (spherical model)
 class CRS_EPSG3857 extends Earth
 {
     const R = 6378137; // Earth equatorial radius
@@ -164,6 +166,103 @@ class CRS_EPSG3857 extends Earth
 
 
 
+// World Mercator projection (spheroid model (ellipsoid of revolution))
+class CRS_EPSG3395 extends Earth
+{
+    const R = 6378137; // Earth equatorial radius
+    const R_MINOR = 6356752.3142; // Polar radius
+    const MAX_LATITUDE = 89.5; 
+
+    public function getName()
+    {
+        return 'EPSG:3395';
+    }
+
+    public function project(LatLon $latlon)
+    {
+        // https://wiki.openstreetmap.org/wiki/Mercator#Elliptical_(true)_Mercator_Projection
+        // https://en.wikipedia.org/wiki/Mercator_projection#Generalization_to_the_ellipsoid
+
+        $lat = max(min($latlon->lat, self::MAX_LATITUDE), -self::MAX_LATITUDE);
+        $to_rad = M_PI / 180.0;
+        $x = ($latlon->lon * $to_rad) * self::R;
+
+        $ratio = self::R_MINOR / self::R;
+        $e = sqrt(1 - $ratio * $ratio);
+        $phi = $lat * $to_rad;
+        $con = $e * sin($phi);
+        $con = pow((1.0 - $con) / (1.0 + $con), $e / 2);
+        $ts = tan(0.5 * ((M_PI_2) - $phi)) / $con;
+        $y = -self::R * log(max($ts, 1E-10));
+        return new Point($x, $y);
+    }
+
+    public function unproject(Point $p)
+    {
+        $to_deg = 180.0 / M_PI;
+        $lon = ($p->x / self::R) * $to_deg;
+
+        $ratio = self::R_MINOR / self::R;
+        $e = sqrt(1 - $ratio * $ratio);
+        $ts = exp(-$p->y / self::R);
+        $phi = M_PI_2 - 2 * atan($ts);
+        $dphi = 1.0;
+        $i = 0;
+        while((abs($dphi) > 1E-8) && ($i < 15))
+        {
+            $con = $e * sin($phi);
+            $con = pow((1.0 - $con) / (1.0 + $con), $e / 2);
+            $dphi = M_PI_2 - 2 * atan($ts * $con) - $phi;
+            $phi += $dphi;
+            $i++;
+        }
+        $lat = $phi * $to_deg;
+        return new LatLon($lat, $lon);
+    }
+
+
+    // Given latitude in degrees, this computes the scaling factor at that latitude when projected 
+    //
+    // When a geometry is transformed from 4326 to 3395 it will be projected and scaled up the further away from the equator it is.
+    //
+    // Assumes input latitude is in the range (-90,90), poles not included as they are singularities, scaling would be infinite.
+    public function scalefactor($latitude)
+    {
+        $latitude = floatval($latitude);
+        if($latitude <= -90 || $latitude >= 90)
+        {
+            throw new \Exception("Latitude must be in the range (-90,90)");
+        }
+        // https://en.wikipedia.org/wiki/Mercator_projection#Generalization_to_the_ellipsoid
+        $to_rad = M_PI / 180.0;
+        $ratio = self::R_MINOR / self::R;
+        $e = sqrt(1 - $ratio * $ratio);
+        $phi = $latitude * $to_rad;
+        $con = $e * sin($phi);
+
+        return (1.0 / cos($phi)) * sqrt(1 - $con*$con);
+    }
+
+    // Transformation matrix to transform from crs to map pixels [0,$mapsize)
+    public function crsToMapTransformation($mapsize)
+    {
+        $scale = $mapsize * 0.5 / (M_PI * self::R);
+        return new Matrix($scale, 0, 0.5*$mapsize,
+                            0, -$scale, 0.5*$mapsize);
+    }
+
+    public function mapToCrsTransformation($mapsize)
+    {
+        // This is the inverse of crsToMapTransformation
+        $scale = (M_PI * self::R) * 2 / $mapsize;
+        return Matrix::mul(
+            Matrix::scale($scale, -$scale),
+            Matrix::translation(-0.5*$mapsize, -0.5*$mapsize));
+    }
+}
+
+
+
 
 class CRS_EPSG4326 extends Earth
 {
@@ -200,3 +299,5 @@ class CRS_EPSG4326 extends Earth
             Matrix::translation(-0.5*$mapsize, -0.5*$mapsize));
     }
 }
+
+
