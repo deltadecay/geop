@@ -1,10 +1,11 @@
 # Geop 
 
-Working with maps in the spherical mercator model (crs EPSG:3857) in php.
+Render images of maps in php.
 
-* Project/unproject lat/lon points
 * Render maps with tile providers such as OpenStreetMap
 * Render maps with WMS based services
+* Project/unproject lat/lon points
+* Supported map projections EPSG:3857, EPSG:3395 and EPSG:4326 
 
 
 ## Example: Render a map image
