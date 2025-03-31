@@ -17,6 +17,11 @@ class Map
         $this->crs = $crs;
     }
 
+    public function getCrs()
+    {
+        return $this->crs;
+    }
+
     public function getCrsName()
     {
         return $this->crs->getName();
@@ -93,10 +98,28 @@ class Map
         return $pixel;
     }
 
+    // Transform the lat lon position to the unit square [0,1)
+    public function latLonToUnitSquare(LatLon $latlon)
+    {
+        $p = $this->crs->project($latlon);
+        $m = $this->crs->crsToMapTransformation(1.0);
+        $unitp = $m->transform($p);
+        return $unitp;
+    }
+
     // Transform a map pixel position to lat lon
     public function mapToLatLon(Point $pixel, $zoom)
     {
         $p = $this->mapToCrs($pixel, $zoom);
+        $latlon = $this->crs->unproject($p);
+        return $latlon;
+    }
+
+    // Transform a point in the unit square to lat lon
+    public function unitSquareToLatLon(Point $unitp)
+    {
+        $m = $this->crs->mapToCrsTransformation(1.0);
+        $p = $m->transform($unitp);
         $latlon = $this->crs->unproject($p);
         return $latlon;
     }

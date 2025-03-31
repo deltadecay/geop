@@ -100,7 +100,53 @@ class MapRenderer
         $x = $cp_pixel->x - $topleft_pixel->x;
         $y = $cp_pixel->y - $topleft_pixel->y;
     
-        return ['image' => $mapimage, 'pos' => new Point($x, $y)];
+        return ['image' => $mapimage, 'pos' => new Point($x, $y), 'topleft' => $topleft_pixel, 'bottomright' => $bottomright_pixel];
+    }
+
+
+
+    // Given two corner points on a bounding box in lat lon coordinates, compute the center point and zoom level
+    // that fits the bounds inside a rendered image with given width and height.
+    public function fitBounds(LatLon $p1, LatLon $p2, $render_width, $render_height, $maxzoom = 19)
+    {
+        $maxzoom = intval($maxzoom);
+        if($this->map == null)
+        {
+            throw new \Exception("Map model not provided");
+        }
+
+        // Cannot take mid point in lat lon since after projection
+        // lat scales according to a scaling factor the further away from equator it is, so
+        // it is not linear and thus we cannot take the mid point in lat lon coordinates.
+        //$cp = new LatLon(($p1->lat + $p2->lat)*0.5, ($p1->lon + $p2->lon)*0.5);
+        
+        $unitp1 = $this->map->latLonToUnitSquare($p1);
+        $unitp2 = $this->map->latLonToUnitSquare($p2);
+        // Points in unit square are after proj and thus we can take mid point
+        $midunitp = new Point(($unitp1->x + $unitp2->x)*0.5, ($unitp1->y + $unitp2->y)*0.5);
+
+        // Width and height in the unit square
+        $uw = abs($unitp2->x - $unitp1->x);
+        $uh = abs($unitp2->y - $unitp1->y);
+
+        // zoom = log2(rendersize / (tilesize * unitsize)), where size is width or height, log2(x) = log(x)/log(2)
+        $oolog2 = 1.0 / log(2.0); 
+        $zoom_w = $maxzoom;
+        if($uw > 0.0)
+        {
+            $zoom_w  = intval(log($render_width / ($this->map->getTileSize() * $uw)) * $oolog2);
+        }
+        $zoom_h = $maxzoom;
+        if($uh > 0.0)
+        {
+            $zoom_h  = intval(log($render_height / ($this->map->getTileSize() * $uh)) * $oolog2);
+        }
+        $zoom = min($zoom_w, $zoom_h);
+        if($zoom < 0) $zoom = 0;
+        if($zoom > $maxzoom) $zoom = $maxzoom;
+
+        $latlon = $this->map->unitSquareToLatLon($midunitp);
+        return [$latlon, $zoom];
     }
 }
 
