@@ -54,9 +54,9 @@ class Map
     public function getNumTiles($zoom)
     {
         $zoom = intval($zoom);
-        if($zoom < 0 || $zoom > 19)
+        if($zoom < 0 || $zoom > 30)
         {
-            throw new \Exception("Valid values of zoom are in the range [0,19]");
+            throw new \Exception("Valid values of zoom are in the range [0,30]");
         }
         return pow(2, $zoom);
     }

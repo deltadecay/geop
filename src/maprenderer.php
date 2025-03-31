@@ -34,9 +34,9 @@ class MapRenderer
         {
             throw new \Exception("Tile service not provided");
         }
-        if($zoom < 0 || $zoom > 19)
+        if($zoom < 0 || $zoom > 30)
         {
-            throw new \Exception("Valid values of zoom are in the range [0,19]");
+            throw new \Exception("Valid values of zoom are in the range [0,30]");
         }
         $cp_pixel = $map->latLonToMap($latlon, $zoom);
         $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
