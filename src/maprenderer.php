@@ -24,7 +24,7 @@ class MapRenderer
 
     public function renderMap(LatLon $latlon, $zoom, $render_width=640, $render_height=480, $bgcolor = '#7f7f7f')
     {
-        $zoom = intval($zoom);
+        $izoom = intval($zoom);
         $map = $this->map;
         if($map == null)
         {
@@ -34,17 +34,17 @@ class MapRenderer
         {
             throw new \Exception("Tile service not provided");
         }
-        if($zoom < 0 || $zoom > 30)
+        if($izoom < 0 || $izoom > 30)
         {
             throw new \Exception("Valid values of zoom are in the range [0,30]");
         }
-        $cp_pixel = $map->latLonToMap($latlon, $zoom);
+        $cp_pixel = $map->latLonToMap($latlon, $izoom);
         $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
         $bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
 
         // Note! These tile coordinates can be outside map bounds, negative or >= getNumTiles
-        $topleft_tile = $map->getTile($topleft_pixel, $zoom);
-        $bottomright_tile = $map->getTile($bottomright_pixel, $zoom);
+        $topleft_tile = $map->getTile($topleft_pixel, $izoom);
+        $bottomright_tile = $map->getTile($bottomright_pixel, $izoom);
     
         // This is the image with all the tiles fitting completely
         // Later it will be cropped to render width and height
@@ -58,7 +58,7 @@ class MapRenderer
         }
 
         // This is the size of the map in valid tiles
-        $ntiles = $map->getNumTiles($zoom);
+        $ntiles = $map->getNumTiles($izoom);
         // but the tiles we iterate over can be negative
         // but we want to wrap all negative tiles to valid tiles along longitude
         // tmulx is the value to add to any negative tile before modulo to get
@@ -75,9 +75,9 @@ class MapRenderer
                 // wrap tiles along longitude
                 $wrapped_tx = ($tx + $tmulx) % $ntiles;
                 $tile = new Point($wrapped_tx, $ty);
-                if($map->isTileValid($tile, $zoom))
+                if($map->isTileValid($tile, $izoom))
                 {
-                    $imgblob = $this->tileservice->fetchMapTile($map, $tile, $zoom);
+                    $imgblob = $this->tileservice->fetchMapTile($map, $tile, $izoom);
                     if($imgblob != null && $this->imagefactory != null)
                     {
                         $tileimage = $this->imagefactory->newImageFromBlob($imgblob);
@@ -89,9 +89,22 @@ class MapRenderer
             }
             $offsety += $map->getTileSize();
         }
+
+        $scale = pow(2, $zoom - $izoom);
+        if($scale > 1.0)
+        {
+            if ($this->imagefactory != null)
+            {
+                $this->imagefactory->resizeImage($mapimage, intval($mapimgwidth*$scale), intval($mapimgheight*$scale));
+            }
+        }
     
-        $crop_offsetx = intval($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x);
-        $crop_offsety = intval($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y);
+        $midp_offsetx = ($render_width*$scale - $render_width) / 2;
+        $midp_offsety = ($render_height*$scale - $render_height) / 2;
+
+        $crop_offsetx = intval(($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x) * $scale + $midp_offsetx);
+        $crop_offsety = intval(($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y) * $scale + $midp_offsety);
+
         if ($this->imagefactory != null)
         {
             $this->imagefactory->cropImage($mapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
@@ -100,7 +113,17 @@ class MapRenderer
         $x = $cp_pixel->x - $topleft_pixel->x;
         $y = $cp_pixel->y - $topleft_pixel->y;
     
-        return ['image' => $mapimage, 'pos' => new Point($x, $y), 'topleft' => $topleft_pixel, 'bottomright' => $bottomright_pixel];
+
+        // Compute with real fractional zoom
+        $cp_pixel = $map->latLonToMap($latlon, $zoom);
+        $topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+        $bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
+
+        // The topleft and bottomright corners in lat lon
+        $topleft = $map->mapToLatLon($topleft_pixel, $zoom);
+        $bottomright = $map->mapToLatLon($bottomright_pixel, $zoom);
+
+        return ['image' => $mapimage, 'pos' => new Point($x, $y), 'topleft' => $topleft, 'bottomright' => $bottomright];
     }
 
 
@@ -134,12 +157,12 @@ class MapRenderer
         $zoom_w = $maxzoom;
         if($uw > 0.0)
         {
-            $zoom_w  = intval(log($render_width / ($this->map->getTileSize() * $uw)) * $oolog2);
+            $zoom_w  = (log($render_width / ($this->map->getTileSize() * $uw)) * $oolog2);
         }
         $zoom_h = $maxzoom;
         if($uh > 0.0)
         {
-            $zoom_h  = intval(log($render_height / ($this->map->getTileSize() * $uh)) * $oolog2);
+            $zoom_h  = (log($render_height / ($this->map->getTileSize() * $uh)) * $oolog2);
         }
         $zoom = min($zoom_w, $zoom_h);
         if($zoom < 0) $zoom = 0;

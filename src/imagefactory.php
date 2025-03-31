@@ -11,7 +11,7 @@ interface ImageFactory
 
     public function drawImageIntoImage($dstImage, $srcImage, $offsetx, $offsety);
     public function cropImage($image, $width, $height, $offsetx, $offsety);
-
+    public function resizeImage($image, $width, $height);
     public function clearImage($image);
 
     public function getImageSize($image);
@@ -70,6 +70,15 @@ class ImagickFactory implements ImageFactory
         if($image != null)
         {
             $image->cropImage($width, $height, $offsetx, $offsety);
+        }
+    }
+
+    public function resizeImage($image, $width, $height)
+    {
+        if($image != null)
+        {
+            $blur = 1.0;
+            $image->resizeImage(intval($width), intval($height), \Imagick::FILTER_LANCZOS, $blur);
         }
     }
 
