@@ -22,6 +22,87 @@ class MapRenderer
         $this->imagefactory = $imagefactory;
     }
 
+    // Given two corner points on a bounding box in lat lon coordinates, compute the center point and zoom level
+    // that fits the bounds inside a rendered image with given width and height.
+    public function fitBounds(LatLon $p1, LatLon $p2, $render_width, $render_height, $maxzoom = 19)
+    {
+        $maxzoom = intval($maxzoom);
+        if($this->map == null)
+        {
+            throw new \Exception("Map model not provided");
+        }
+
+        // Cannot take mid point in lat lon since after projection
+        // lat scales according to a scaling factor the further away from equator it is, so
+        // it is not linear and thus we cannot take the mid point in lat lon coordinates.
+        //$cp = new LatLon(($p1->lat + $p2->lat)*0.5, ($p1->lon + $p2->lon)*0.5);
+        
+        $unitp1 = $this->map->latLonToUnitSquare($p1);
+        $unitp2 = $this->map->latLonToUnitSquare($p2);
+        // Points in unit square are after proj and thus we can take mid point
+        $midunitp = new Point(($unitp1->x + $unitp2->x)*0.5, ($unitp1->y + $unitp2->y)*0.5);
+
+        // Width and height in the unit square
+        $uw = abs($unitp2->x - $unitp1->x);
+        $uh = abs($unitp2->y - $unitp1->y);
+
+        // zoom = log2(rendersize / (tilesize * unitsize)), where size is width or height, log2(x) = log(x)/log(2)
+        $oolog2 = 1.0 / log(2.0); 
+        $zoom_w = $maxzoom;
+        if($uw > 0.0)
+        {
+            $zoom_w  = (log($render_width / ($this->map->getTileSize() * $uw)) * $oolog2);
+        }
+        $zoom_h = $maxzoom;
+        if($uh > 0.0)
+        {
+            $zoom_h  = (log($render_height / ($this->map->getTileSize() * $uh)) * $oolog2);
+        }
+        $zoom = min($zoom_w, $zoom_h);
+        if($zoom < 0) $zoom = 0;
+        if($zoom > $maxzoom) $zoom = $maxzoom;
+
+        $latlon = $this->map->unitSquareToLatLon($midunitp);
+        return [$latlon, $zoom];
+    }
+
+
+    public function addGeoJsonLayer($geojson, $options = [])
+    {
+        if(!is_array($options))
+        {
+            $options = [];
+        }
+        if(is_string($geojson))
+        {
+            $geojson = json_decode($geojson, true);
+        }
+        $featurecoll = null;
+        $type = strtolower($geojson['type']);
+        if($type == "featurecollection")
+        {
+            $featurecoll = $geojson;
+        }
+        elseif($type == "feature")
+        {
+            $featurecoll = ["type" => "FeatureCollection", "features" => [ $geojson ]];
+        }
+        elseif(in_array($type, ["point", "multipoint", "linestring", "multilinestring", "polygon", "multipolygon", "geometrycollection"]))
+        {
+            $featurecoll = ["type" => "FeatureCollection", "features" => [  
+                "type" => "Feature",
+                //"properties" => [],
+                "geometry" => $geojson
+            ]];
+        }
+        
+        if($featurecoll != null)
+        {
+            $this->layers[] = ["type" => "geojson", "geojson" => $featurecoll, "options" => $options]; 
+        }
+    }
+
+
     public function renderMap(LatLon $latlon, $zoom, $render_width=640, $render_height=480, $bgcolor = '#7f7f7f')
     {
         $izoom = intval($zoom);
@@ -156,6 +237,65 @@ class MapRenderer
 
     private function drawGeoJsonLayer($drawing, $geojson, $options, $map, $zoom)
     {
+        foreach($geojson['features'] as $feature)
+        {
+            $geom = $feature['geometry'];
+            $this->drawGeometry($drawing, $geom, $options, $map, $zoom);
+        }
+    }
+
+
+
+    private function drawGeometry($drawing, $geom, $options, $map, $zoom)
+    {
+        $type = strtolower($geom['type']);
+        if($type == "point")
+        {
+            $point = $geom['coordinates'];
+            $this->drawPoint($drawing, $point, $options, $map, $zoom);
+        }
+        elseif($type == "multipoint")
+        {
+            foreach($geom['coordinates'] as $point)
+            {
+                $this->drawPoint($drawing, $point, $options, $map, $zoom);
+            }
+        }
+        elseif($type == "linestring")
+        {
+            $linestring = $geom['coordinates'];
+            $this->drawLineString($drawing, $linestring, $options, $map, $zoom);
+        }
+        elseif($type == "multilinestring")
+        {
+            foreach($geom['coordinates'] as $linestring)
+            {
+                $this->drawLineString($drawing, $linestring, $options, $map, $zoom);
+            }
+        }
+        elseif($type == "polygon")
+        {
+            $polygon = $geom['coordinates'];
+            $this->drawPolygon($drawing, $polygon, $options, $map, $zoom);
+        }
+        elseif($type == "multipolygon")
+        {
+            foreach($geom['coordinates'] as $polygon)
+            {
+                $this->drawPolygon($drawing, $polygon, $options, $map, $zoom);
+            }
+        }
+        elseif($type == "geometrycollection")
+        {
+            foreach($geom['geometries'] as $geometry)
+            {
+                $this->drawGeometry($drawing, $geometry, $options, $map, $zoom);
+            }
+        }
+    }
+
+    private function getLatLonIndices($options)
+    {
         $LAT = 1;
         $LON = 0;
         if(isset($options['swapxy']) && !!$options['swapxy'])
@@ -163,134 +303,59 @@ class MapRenderer
             $LAT = 0;
             $LON = 1;
         }
+        return [$LAT, $LON];
+    }
+    
+    private function drawPoint($drawing, $point, $options, $map, $zoom)
+    {
+        list($LAT, $LON) = $this->getLatLonIndices($options);
 
-        foreach($geojson['features'] as $feature)
+        $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
+        if ($this->imagefactory != null)
         {
-            $geom = $feature['geometry'];
-            $type = strtolower($geom['type']);
-            if($type == "point")
+            $radius = isset($options['style']['pointradius']) ? $options['style']['pointradius'] : 1;
+            $this->imagefactory->drawCircle($drawing, $pixel->x, $pixel->y, $radius);
+        }
+    }
+
+    private function drawLineString($drawing, $linestring, $options, $map, $zoom)
+    {
+        list($LAT, $LON) = $this->getLatLonIndices($options);
+
+        $polyline_pixel = [];
+        foreach($linestring as $point)
+        {
+            $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
+            $polyline_pixel[] = ['x' => $pixel->x, 'y' => $pixel->y];
+        }
+        if ($this->imagefactory != null)
+        {
+            $this->imagefactory->drawPolyline($drawing, $polyline_pixel);
+        }
+    }
+
+    private function drawPolygon($drawing, $polygon, $options, $map, $zoom)
+    {
+        list($LAT, $LON) = $this->getLatLonIndices($options);
+
+        $poly_pixel = [];
+        foreach($polygon as $ring)
+        {
+            $ring_pixel = [];
+            foreach($ring as $point)
             {
-                $point = $geom['coordinates'];
                 $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-                if ($this->imagefactory != null)
-                {
-                    $radius = isset($options['style']['pointradius']) ? $options['style']['pointradius'] : 1;
-                    $this->imagefactory->drawCircle($drawing, $pixel->x, $pixel->y, $radius);
-                }
+                $ring_pixel[] = ['x' => $pixel->x, 'y' => $pixel->y];
             }
-            elseif($type == "linestring")
-            {
-                $polyline_pixel = [];
-                foreach($geom['coordinates'] as $point)
-                {
-                    $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-                    $polyline_pixel[] = ['x' => $pixel->x, 'y' => $pixel->y];
-                }
-                if ($this->imagefactory != null)
-                {
-                    $this->imagefactory->drawPolyline($drawing, $polyline_pixel);
-                }
-            }
-            elseif($type == "polygon")
-            {
-                $poly_pixel = [];
-                foreach($geom['coordinates'] as $ring)
-                {
-                    $ring_pixel = [];
-                    foreach($ring as $point)
-                    {
-                        $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-                        $ring_pixel[] = ['x' => $pixel->x, 'y' => $pixel->y];
-                    }
-                    $poly_pixel[] = $ring_pixel;
-                }
-                if ($this->imagefactory != null)
-                {
-                    $this->imagefactory->drawPolygon($drawing, $poly_pixel);
-                }
-            }
+            $poly_pixel[] = $ring_pixel;
+        }
+        if ($this->imagefactory != null)
+        {
+            $this->imagefactory->drawPolygon($drawing, $poly_pixel);
         }
     }
 
-    // Given two corner points on a bounding box in lat lon coordinates, compute the center point and zoom level
-    // that fits the bounds inside a rendered image with given width and height.
-    public function fitBounds(LatLon $p1, LatLon $p2, $render_width, $render_height, $maxzoom = 19)
-    {
-        $maxzoom = intval($maxzoom);
-        if($this->map == null)
-        {
-            throw new \Exception("Map model not provided");
-        }
 
-        // Cannot take mid point in lat lon since after projection
-        // lat scales according to a scaling factor the further away from equator it is, so
-        // it is not linear and thus we cannot take the mid point in lat lon coordinates.
-        //$cp = new LatLon(($p1->lat + $p2->lat)*0.5, ($p1->lon + $p2->lon)*0.5);
-        
-        $unitp1 = $this->map->latLonToUnitSquare($p1);
-        $unitp2 = $this->map->latLonToUnitSquare($p2);
-        // Points in unit square are after proj and thus we can take mid point
-        $midunitp = new Point(($unitp1->x + $unitp2->x)*0.5, ($unitp1->y + $unitp2->y)*0.5);
-
-        // Width and height in the unit square
-        $uw = abs($unitp2->x - $unitp1->x);
-        $uh = abs($unitp2->y - $unitp1->y);
-
-        // zoom = log2(rendersize / (tilesize * unitsize)), where size is width or height, log2(x) = log(x)/log(2)
-        $oolog2 = 1.0 / log(2.0); 
-        $zoom_w = $maxzoom;
-        if($uw > 0.0)
-        {
-            $zoom_w  = (log($render_width / ($this->map->getTileSize() * $uw)) * $oolog2);
-        }
-        $zoom_h = $maxzoom;
-        if($uh > 0.0)
-        {
-            $zoom_h  = (log($render_height / ($this->map->getTileSize() * $uh)) * $oolog2);
-        }
-        $zoom = min($zoom_w, $zoom_h);
-        if($zoom < 0) $zoom = 0;
-        if($zoom > $maxzoom) $zoom = $maxzoom;
-
-        $latlon = $this->map->unitSquareToLatLon($midunitp);
-        return [$latlon, $zoom];
-    }
-
-
-    public function addGeoJsonLayer($geojson, $options = [])
-    {
-        if(!is_array($options))
-        {
-            $options = [];
-        }
-        if(is_string($geojson))
-        {
-            $geojson = json_decode($geojson, true);
-        }
-        $featurecoll = null;
-        $type = strtolower($geojson['type']);
-        if($type == "featurecollection")
-        {
-            $featurecoll = $geojson;
-        }
-        elseif($type == "feature")
-        {
-            $featurecoll = ["type" => "FeatureCollection", "features" => [ $geojson ]];
-        }
-        elseif(in_array($type, ["point", "multipoint", "linestring", "multilinestring", "polygon", "multipolygon", "geometrycollection"]))
-        {
-            $featurecoll = ["type" => "FeatureCollection", "features" => [  
-                "type" => "Feature",
-                //"properties" => [],
-                "geometry" => $geojson
-            ]];
-        }
-        
-        if($featurecoll != null)
-        {
-            $this->layers[] = ["type" => "geojson", "geojson" => $featurecoll, "options" => $options]; 
-        }
-    }
-
+    
 }
 
