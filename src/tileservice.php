@@ -39,7 +39,7 @@ class TileService
         return $format;
     }
 
-    protected function getUrl(Map $map, Point $tile, $zoom)
+    protected function makeUrl(Map $map, Point $tile, $zoom)
     {
         $x = intval($tile->x);
         $y = intval($tile->y);
@@ -48,7 +48,7 @@ class TileService
         return $url;
     }
 
-    protected function getHeaders(Map $map, Point $tile, $zoom)
+    protected function makeHeaders(Map $map, Point $tile, $zoom)
     {
         $headers = [];
         if(strlen($this->useragent) > 0)
@@ -83,8 +83,8 @@ class TileService
             return $this->cache->loadTile($x, $y, $z);
         }
 
-        $url = $this->getUrl($map, $tile, $zoom);
-        $headers = $this->getHeaders($map, $tile, $zoom);
+        $url = $this->makeUrl($map, $tile, $zoom);
+        $headers = $this->makeHeaders($map, $tile, $zoom);
         
         if($debug) 
             echo "Fetch /$z/$x/$y from $url\n";
@@ -133,7 +133,7 @@ class TileService
     }
 
     // Try identifying the blob image format from the magic numbers
-    private function identifyBlobImageFormat($blob)
+    protected function identifyBlobImageFormat($blob)
     {
         $magic3 = substr($blob, 0, 3);
         if($magic3 == pack("C3", 0xff, 0xd8, 0xff))
@@ -175,7 +175,7 @@ class WMSTileService extends TileService
         return "";
     }
 
-    protected function getUrl(Map $map, Point $tile, $zoom)
+    protected function makeUrl(Map $map, Point $tile, $zoom)
     {
         // WMS example:
 

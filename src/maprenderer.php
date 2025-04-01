@@ -5,9 +5,7 @@ namespace geop;
 require_once(__DIR__."/tileservice.php");
 require_once(__DIR__."/imagefactory.php");
 require_once(__DIR__."/map.php");
-
-use \geop\LatLon;
-use \geop\Point;
+require_once(__DIR__."/geometry.php");
 
 class MapRenderer
 {
