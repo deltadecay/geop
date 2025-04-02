@@ -89,11 +89,12 @@ class MapRenderer
         }
         elseif(in_array($type, ["point", "multipoint", "linestring", "multilinestring", "polygon", "multipolygon", "geometrycollection"]))
         {
-            $featurecoll = ["type" => "FeatureCollection", "features" => [  
-                "type" => "Feature",
-                //"properties" => [],
-                "geometry" => $geojson
-            ]];
+            $featurecoll = [
+                "type" => "FeatureCollection", 
+                "features" => [
+                    [ "type" => "Feature", "geometry" => $geojson, ]
+                ]
+            ];
         }
         
         if($featurecoll != null)
@@ -237,10 +238,18 @@ class MapRenderer
 
     private function drawGeoJsonLayer($drawing, $geojson, $options, $map, $zoom)
     {
-        foreach($geojson['features'] as $feature)
+        $type = strtolower($geojson['type']);
+        if($type == "featurecollection")
         {
-            $geom = $feature['geometry'];
-            $this->drawGeometry($drawing, $geom, $options, $map, $zoom);
+            foreach($geojson['features'] as $feature)
+            {
+                $type = strtolower($feature['type']);
+                if($type == "feature")
+                {
+                    $geom = $feature['geometry'];
+                    $this->drawGeometry($drawing, $geom, $options, $map, $zoom);
+                }
+            }
         }
     }
 
