@@ -9,7 +9,7 @@ Render images of maps in php.
 * Render geojson geometries
 
 
-## Example: Render a map image
+## Render a map image
 
 Below is an example showing how to render a map image of size 640 x 480 pixels centered
 at latitude 41.381073 and longitude 2.173224 and zoom level 5.
@@ -43,7 +43,20 @@ $imgfactory->saveImageToFile($output['image'], "assets/map1.webp");
 
 ![Map](assets/map1.webp)
 
-## WMS
+
+## Pseudo Mercator projection
+
+Understanding the pseudo Mercator map projection EPSG:3857 is easiest with an image. This shows the [Tissot's indicatrix](https://en.wikipedia.org/wiki/Tissot%27s_indicatrix). Each one of the circles has a radius of 200km
+and they are placed at latitudes {-70, 60, 40, 20, 0, 20, 40, 60, 70} and longitudes 
+{-160, -120, -80, -40, 0, 40, 80, 120, 160}. At equator the scaling factor of the projection is one, but as we get further away from the equator the scaling factor increases. This means countries further away from the equator have an inflated size in this projection.
+
+![Map](assets/map4.webp)
+
+The file **[example/circles.geojson](example/circles.geojson)** can be viewed at [https://geojson.io](https://geojson.io) and switching between Globe/Mercator demonstrates the effect.
+
+
+
+## WMS tiles
 
 Web Map Services (WMS) can be used with the **[WMSTileService](src/tileservice.php)**. 
 
