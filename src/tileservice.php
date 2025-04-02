@@ -12,7 +12,7 @@ class TileService
 {
     protected $options = [];
     protected $cache = null;
-    protected $useragent = 'TileService';
+    protected $useragent = '';
 
     public function __construct($options, $cache = null)
     {

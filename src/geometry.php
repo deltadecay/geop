@@ -57,10 +57,10 @@ class LatLon
 
     public static function clamplatitude($lat)
     {
-        if($lat < -90 || $lat > 90)
+        /*if($lat < -90 || $lat > 90)
         {
             throw new \Exception("Latitude must be in the range [-90,90]");
-        }
+        }*/
         if($lat < -90) return -90;
         if($lat > 90) return 90;
         return $lat;
