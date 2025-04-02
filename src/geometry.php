@@ -87,7 +87,8 @@ class Matrix
     // a b c
     // d e f
     // 0 0 1
-    public $a=1, $b=0, $c=0, $d=0, $e=1, $f=0;
+    public $a = 1, $b = 0, $c = 0, 
+            $d = 0, $e = 1, $f = 0;
 
     public function __construct(...$m)
     {
@@ -146,24 +147,24 @@ class Matrix
     
     public static function translation($tx=0, $ty=0)
     {
-        return new Matrix(1,0,$tx,0,1,$ty);
+        return new Matrix(1, 0, $tx, 0, 1, $ty);
     }
     
     public static function scale($sx=1, $sy=1)
     {
-        return new Matrix($sx,0,0,0,$sy,0);
+        return new Matrix($sx, 0, 0, 0, $sy, 0);
     }
     
     public static function reflection($rx=1, $ry=1)
     {
-        return new Matrix($rx,0,0,0,$ry,0);
+        return new Matrix($rx, 0, 0, 0, $ry, 0);
     }
     
     public static function rotate($theta)
     {
         $c = cos($theta);
         $s = sin($theta);
-        return new Matrix($c,-$s,0,$s,$c,0);
+        return new Matrix($c, -$s, 0, $s, $c, 0);
     }
     
 }

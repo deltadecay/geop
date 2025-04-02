@@ -210,8 +210,8 @@ class MapRenderer
         if ($this->imagefactory != null)
         {
             $drawing = $this->imagefactory->newDrawing();
-            $affine = ["sx" => 1, "sy" => 1, "rx" => 0, "ry" => 0, "tx" => -$topleft_pixel->x, "ty" => -$topleft_pixel->y];
-            $this->imagefactory->drawTransformation($drawing, $affine);
+            $originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
+            $this->imagefactory->drawTransformation($drawing, $originMatrix);
         }
         foreach ($this->layers as $layer)
         {

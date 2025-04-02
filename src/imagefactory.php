@@ -23,7 +23,7 @@ interface ImageFactory
     public function drawDrawingIntoImage($image, $drawing);
     public function drawPushState($drawing);
     public function drawPopState($drawing);
-    public function drawTransformation($drawing, $affine);
+    public function drawTransformation($drawing, $matrix);
     public function drawPolygon($drawing, $polygon);
     public function drawPolyline($drawing, $points);
     public function drawCircle($drawing, $x, $y, $radius);
@@ -170,10 +170,20 @@ class ImagickFactory implements ImageFactory
             $drawing->pop();
         }
     }
-    public function drawTransformation($drawing, $affine = null)
+    public function drawTransformation($drawing, $matrix = null)
     {
-        if($drawing != null && $affine != null)
+        if($drawing != null && $matrix != null)
         {
+            if($matrix instanceof Matrix)
+            {
+                $affine = [
+                    "sx" => $matrix->a, "rx" => $matrix->b, "tx" => $matrix->c,
+                    "ry" => $matrix->d, "sy" => $matrix->e, "ty" => $matrix->f];
+            } 
+            else
+            {
+                $affine = $matrix;
+            }
             $drawing->affine($affine);
         }
     }
@@ -186,13 +196,18 @@ class ImagickFactory implements ImageFactory
             $drawing->setFillRule(\Imagick::FILLRULE_EVENODD);
             $drawing->pathStart();
 
+            // Polygon is made up of one or several rings, first is the outer contour
+            // and the rest are holes.
             foreach($polygon as $ring)
             {
-                $drawing->pathMoveToAbsolute($ring[0]['x'], $ring[0]['y']);
                 $npoints = count($ring);
-                for($i=1; $i<$npoints; $i++)
+                if($npoints > 0)
                 {
-                    $drawing->pathLineToAbsolute($ring[$i]['x'], $ring[$i]['y']);
+                    $drawing->pathMoveToAbsolute($ring[0]['x'], $ring[0]['y']);
+                    for($i=1; $i<$npoints; $i++)
+                    {
+                        $drawing->pathLineToAbsolute($ring[$i]['x'], $ring[$i]['y']);
+                    }
                 }
             }
             $drawing->pathFinish();
