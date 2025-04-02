@@ -138,11 +138,36 @@ class ImagickFactory implements ImageFactory
         $fillcolor = isset($style['fillcolor']) ? $style['fillcolor'] : '#3388ff3f'; 
         $strokewidth = isset($style['strokewidth']) ? $style['strokewidth'] : 4;
 
+        $strokelinecap = isset($style['strokelinecap']) ? $style['strokelinecap'] : "butt";
+        $linecaps = [
+            "undefined" => \Imagick::LINECAP_UNDEFINED,
+            "butt" => \Imagick::LINECAP_BUTT,
+            "round" => \Imagick::LINECAP_ROUND, 
+            "square" => \Imagick::LINECAP_SQUARE,
+        ];
+        $linecap = isset($linecaps[$strokelinecap]) ? $linecaps[$strokelinecap] : \Imagick::LINECAP_BUTT;
+
+        $strokelinejoin = isset($style['strokelinejoin']) ? $style['strokelinejoin'] : "miter";
+        $linejoins = [
+            "undefined" => \Imagick::LINEJOIN_UNDEFINED ,
+            "miter" => \Imagick::LINEJOIN_MITER,
+            "mitre" => \Imagick::LINEJOIN_MITER,
+            "round" => \Imagick::LINEJOIN_ROUND, 
+            "bevel" => \Imagick::LINEJOIN_BEVEL,
+        ];
+        $linejoin = isset($linejoins[$strokelinejoin]) ? $linejoins[$strokelinejoin] : \Imagick::LINEJOIN_MITER;
+        $miterlimit = isset($style['strokemiterlimit']) ? $style['strokemiterlimit'] : (isset($style['strokemitrelimit']) ? $style['strokemitrelimit'] : 10);
+
         if($drawing != null)
         {
+            // These two can be set with stroke and fill color
             //$drawing->setStrokeOpacity(1.0);
+            //$drawing->setFillOpacity(1.0);
             $drawing->setStrokeColor(new \ImagickPixel($strokecolor));
             $drawing->setStrokeWidth($strokewidth);
+            $drawing->setStrokeLineCap($linecap);
+            $drawing->setStrokeLineJoin($linejoin);
+            $drawing->setStrokeMiterLimit($miterlimit);
             $drawing->setFillColor(new \ImagickPixel($fillcolor));
         }
     }
