@@ -18,7 +18,7 @@ interface ImageFactory
 
     public function saveImageToFile($image, $filename, $format);
 
-    public function newDrawing();
+    public function newDrawing($image);
     public function drawStyle($drawing, $style);
     public function drawDrawingIntoImage($image, $drawing);
     public function drawPushState($drawing);
@@ -124,7 +124,7 @@ class ImagickFactory implements ImageFactory
     }
 
 
-    public function newDrawing()
+    public function newDrawing($image)
     {
         $drawing = new \ImagickDraw();
         // Apply default style
@@ -217,12 +217,11 @@ class ImagickFactory implements ImageFactory
     {
         if($drawing != null)
         {
-            //$drawing->setFillRule(\Imagick::FILLRULE_NONZERO);
+            $savedfillrule = $drawing->getFillRule();
             $drawing->setFillRule(\Imagick::FILLRULE_EVENODD);
             $drawing->pathStart();
-
-            // Polygon is made up of one or several rings, first is the outer contour
-            // and the rest are holes.
+            // Polygons are made up of one or several rings, first is the outer contour
+            // and the rest are inner contours defining holes.
             foreach($polygon as $ring)
             {
                 $npoints = count($ring);
@@ -236,6 +235,7 @@ class ImagickFactory implements ImageFactory
                 }
             }
             $drawing->pathFinish();
+            $drawing->setFillRule($savedfillrule);
         }
     }
 
@@ -243,8 +243,8 @@ class ImagickFactory implements ImageFactory
     {
         if($drawing != null)
         {
-            // Turn off fill
             $savedfillopacity = $drawing->getFillOpacity();
+            // Turn off fill
             $drawing->setFillOpacity(0.0);
             $drawing->polyline($points);
             $drawing->setFillOpacity($savedfillopacity);

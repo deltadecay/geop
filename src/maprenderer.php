@@ -92,7 +92,7 @@ class MapRenderer
             $featurecoll = [
                 "type" => "FeatureCollection", 
                 "features" => [
-                    [ "type" => "Feature", "geometry" => $geojson, ]
+                    [ "type" => "Feature", "geometry" => $geojson, /*"properties" => ["name" => ""] */ ]
                 ]
             ];
         }
@@ -210,7 +210,7 @@ class MapRenderer
         $drawing = null;
         if ($this->imagefactory != null)
         {
-            $drawing = $this->imagefactory->newDrawing();
+            $drawing = $this->imagefactory->newDrawing($mapimage);
             $originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
             $this->imagefactory->drawTransformation($drawing, $originMatrix);
         }
