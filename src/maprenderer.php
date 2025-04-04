@@ -344,7 +344,7 @@ class MapRenderer
         if ($this->imagefactory != null)
         {
             $radius = isset($options['style']['pointradius']) ? $options['style']['pointradius'] : 1;
-            $this->imagefactory->drawCircle($drawing, $pixel->x, $pixel->y, $radius);
+            $this->imagefactory->drawCircle($drawing, $pixel, $radius);
         }
     }
 
@@ -356,7 +356,7 @@ class MapRenderer
         foreach($linestring as $point)
         {
             $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-            $polyline_pixel[] = ['x' => $pixel->x, 'y' => $pixel->y];
+            $polyline_pixel[] = $pixel; 
         }
         if ($this->imagefactory != null)
         {
@@ -375,7 +375,7 @@ class MapRenderer
             foreach($ring as $point)
             {
                 $pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-                $ring_pixel[] = ['x' => $pixel->x, 'y' => $pixel->y];
+                $ring_pixel[] = $pixel;
             }
             $poly_pixel[] = $ring_pixel;
         }

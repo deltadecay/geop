@@ -3,6 +3,8 @@
 
 namespace geop;
 
+require_once(__DIR__."/geometry.php");
+
 interface ImageFactory
 {
     public function newImage($width, $height, $bgcolor);
@@ -25,8 +27,8 @@ interface ImageFactory
     public function drawPopState($drawing);
     public function drawTransformation($drawing, $matrix);
     public function drawPolygon($drawing, $polygon);
-    public function drawPolyline($drawing, $points);
-    public function drawCircle($drawing, $x, $y, $radius);
+    public function drawPolyline($drawing, $polyline);
+    public function drawCircle($drawing, $point, $radius);
 }
 
 
@@ -215,6 +217,11 @@ class ImagickFactory implements ImageFactory
         }
     }
 
+    private function pointToImagickPoint(Point $p) 
+    {
+        return ['x' => $p->x, 'y' => $p->y];
+    }
+
     public function drawPolygon($drawing, $polygon)
     {
         if($drawing != null)
@@ -226,8 +233,9 @@ class ImagickFactory implements ImageFactory
             $nrings = count($polygon);
             if($nrings == 1)
             {
+                $points = array_map([$this, "pointToImagickPoint"], $polygon[0]);
                 // Polygon without holes
-                $drawing->polygon($polygon[0]);
+                $drawing->polygon($points);
             }
             else
             {
@@ -238,10 +246,10 @@ class ImagickFactory implements ImageFactory
                     $npoints = count($ring);
                     if($npoints > 0)
                     {
-                        $drawing->pathMoveToAbsolute($ring[0]['x'], $ring[0]['y']);
+                        $drawing->pathMoveToAbsolute($ring[0]->x, $ring[0]->y);
                         for($i=1; $i<$npoints; $i++)
                         {
-                            $drawing->pathLineToAbsolute($ring[$i]['x'], $ring[$i]['y']);
+                            $drawing->pathLineToAbsolute($ring[$i]->x, $ring[$i]->y);
                         }
                     }
                 }
@@ -251,22 +259,27 @@ class ImagickFactory implements ImageFactory
         }
     }
 
-    public function drawPolyline($drawing, $points)
+    public function drawPolyline($drawing, $polyline)
     {
         if($drawing != null)
         {
+
             $savedfillopacity = $drawing->getFillOpacity();
             // Turn off fill
             $drawing->setFillOpacity(0.0);
+
+            $points = array_map([$this, "pointToImagickPoint"], $polyline);
             $drawing->polyline($points);
             $drawing->setFillOpacity($savedfillopacity);
         }
     }
 
-    public function drawCircle($drawing, $x, $y, $radius)
+    public function drawCircle($drawing, $point, $radius)
     {
         if($drawing != null)
         {
+            $x = $point->x;
+            $y = $point->y;
             $drawing->circle($x, $y, $x + $radius, $y + $radius);
         }
     }
