@@ -160,6 +160,7 @@ class ImagickFactory implements ImageFactory
 
         if($drawing != null)
         {
+            $drawing->setStrokeAntialias(true);
             // These two can be set with stroke and fill color
             //$drawing->setStrokeOpacity(1.0);
             //$drawing->setFillOpacity(1.0);
@@ -176,6 +177,7 @@ class ImagickFactory implements ImageFactory
     {
         if($image != null && $drawing != null)
         {
+            //echo $drawing->getVectorGraphics();
             $image->drawImage($drawing);
         }
     }
