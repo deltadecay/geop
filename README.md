@@ -47,7 +47,7 @@ $imgfactory->saveImageToFile($output['image'], "assets/map1.webp");
 ## Pseudo Mercator projection
 
 Understanding the pseudo Mercator map projection EPSG:3857 is easiest with an image. This shows the [Tissot's indicatrix](https://en.wikipedia.org/wiki/Tissot%27s_indicatrix). Each one of the circles has a radius of 200km
-and they are placed at latitudes {-70, 60, 40, 20, 0, 20, 40, 60, 70} and longitudes 
+and they are placed at latitudes {-70, -60, -40, -20, 0, 20, 40, 60, 70} and longitudes 
 {-160, -120, -80, -40, 0, 40, 80, 120, 160}. At equator the scaling factor of the projection is one, but as we get further away from the equator the scaling factor increases. This means countries further away from the equator have an inflated size in this projection.
 
 ![Map](assets/map4.webp)
