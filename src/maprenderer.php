@@ -206,30 +206,46 @@ class MapRenderer
         $bottomright = $map->mapToLatLon($bottomright_pixel, $zoom);
 
 
-        // Draw layers
-        $drawing = null;
-        if ($this->imagefactory != null)
+        // Handle the wrapped copies of geometries to render
+        $wrapstart = floor($topleft_pixel->x / $map->mapSize($zoom));
+        $wrapend = floor($bottomright_pixel->x / $map->mapSize($zoom));
+        $maxwrap = max(abs($wrapstart), $wrapend);
+        $wrapcopystart = -$maxwrap;
+        $wrapcopyend = $maxwrap; 
+
+        // The map wraps at boundary -180/180 longitude. Some geometries can be represented
+        // at longitude around 180 while others around -180, but these should render
+        // in the same map. Easiest solution is to render multiple copies of the geometries
+        for($wrapcopy=$wrapcopystart; $wrapcopy<=$wrapcopyend; $wrapcopy++)
         {
-            $drawing = $this->imagefactory->newDrawing($mapimage);
-            $originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
-            $this->imagefactory->drawTransformation($drawing, $originMatrix);
-        }
-        foreach ($this->layers as $layer)
-        {
-            $options = $layer['options'];
-            if ($this->imagefactory != null && isset($options['style']))
+            // Translate with the width of map for each wrap copy. 
+            // wrapcopy=0 is the original map
+            $originMatrix = Matrix::translation(-($topleft_pixel->x + $wrapcopy * $map->mapSize($zoom)), -$topleft_pixel->y);
+               
+            // Draw layers
+            $drawing = null;
+            if ($this->imagefactory != null)
             {
-                $this->imagefactory->drawStyle($drawing,$options['style']);
+                $drawing = $this->imagefactory->newDrawing($mapimage);
+                $this->imagefactory->drawTransformation($drawing, $originMatrix);
             }
-            if($layer['type'] == 'geojson')
+            foreach ($this->layers as $layer)
             {
-                $geojson = $layer['geojson'];
-                $this->drawGeoJsonLayer($drawing, $geojson, $options, $map, $zoom);
+                $options = $layer['options'];
+                if ($this->imagefactory != null && isset($options['style']))
+                {
+                    $this->imagefactory->drawStyle($drawing,$options['style']);
+                }
+                if($layer['type'] == 'geojson')
+                {
+                    $geojson = $layer['geojson'];
+                    $this->drawGeoJsonLayer($drawing, $geojson, $options, $map, $zoom);
+                }
             }
-        }
-        if ($this->imagefactory != null)
-        {
-            $this->imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+            if ($this->imagefactory != null)
+            {
+                $this->imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+            }
         }
 
         return ['image' => $mapimage, 'pos' => new Point($x, $y), 'topleft' => $topleft, 'bottomright' => $bottomright];
