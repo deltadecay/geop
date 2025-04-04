@@ -45,12 +45,14 @@ class LatLon
             if(is_array($p[0]))
             {
                 $this->lat = self::clamplatitude(floatval($p[0][0]));
-                $this->lon = self::wraplongitude(floatval($p[0][1]));
+                //$this->lon = self::wraplongitude(floatval($p[0][1]));
+                $this->lon = floatval($p[0][1]);
             } 
             else
             {
                 $this->lat = self::clamplatitude(floatval($p[0]));
-                $this->lon = self::wraplongitude(floatval($p[1]));
+                //$this->lon = self::wraplongitude(floatval($p[1]));
+                $this->lon = floatval($p[1]);
             }
         }
     }
