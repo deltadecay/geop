@@ -221,22 +221,32 @@ class ImagickFactory implements ImageFactory
         {
             $savedfillrule = $drawing->getFillRule();
             $drawing->setFillRule(\Imagick::FILLRULE_EVENODD);
-            $drawing->pathStart();
             // Polygons are made up of one or several rings, first is the outer contour
             // and the rest are inner contours defining holes.
-            foreach($polygon as $ring)
+            $nrings = count($polygon);
+            if($nrings == 1)
             {
-                $npoints = count($ring);
-                if($npoints > 0)
+                // Polygon without holes
+                $drawing->polygon($polygon[0]);
+            }
+            else
+            {
+                // Polygon has holes, use paths to build the contours
+                $drawing->pathStart();
+                foreach($polygon as $ring)
                 {
-                    $drawing->pathMoveToAbsolute($ring[0]['x'], $ring[0]['y']);
-                    for($i=1; $i<$npoints; $i++)
+                    $npoints = count($ring);
+                    if($npoints > 0)
                     {
-                        $drawing->pathLineToAbsolute($ring[$i]['x'], $ring[$i]['y']);
+                        $drawing->pathMoveToAbsolute($ring[0]['x'], $ring[0]['y']);
+                        for($i=1; $i<$npoints; $i++)
+                        {
+                            $drawing->pathLineToAbsolute($ring[$i]['x'], $ring[$i]['y']);
+                        }
                     }
                 }
+                $drawing->pathFinish();
             }
-            $drawing->pathFinish();
             $drawing->setFillRule($savedfillrule);
         }
     }
