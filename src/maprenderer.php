@@ -210,6 +210,10 @@ class MapRenderer
         $wrapstart = floor($topleft_pixel->x / $map->mapSize($zoom));
         $wrapend = floor($bottomright_pixel->x / $map->mapSize($zoom));
         $maxwrap = max(abs($wrapstart), $wrapend);
+        // If render only main, still include both -1 and 1 as there can be geometries at the boundaries
+        // Note! This forces always three renders 
+        if($maxwrap == 0)
+            $maxwrap = 1;
         $wrapcopystart = -$maxwrap;
         $wrapcopyend = $maxwrap; 
 
@@ -218,6 +222,7 @@ class MapRenderer
         // in the same map. Easiest solution is to render multiple copies of the geometries
         for($wrapcopy=$wrapcopystart; $wrapcopy<=$wrapcopyend; $wrapcopy++)
         {
+            //echo "WrapCopy=$wrapcopy\n";
             // Translate with the width of map for each wrap copy. 
             // wrapcopy=0 is the original map
             $originMatrix = Matrix::translation(-($topleft_pixel->x + $wrapcopy * $map->mapSize($zoom)), -$topleft_pixel->y);
