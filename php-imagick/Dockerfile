@@ -27,6 +27,10 @@ RUN git clone https://github.com/Imagick/imagick.git --depth 1 /tmp/imagick && \
     make install
 
 RUN docker-php-ext-enable imagick
+## No need to add pdo_sqlite, it is already installed
+#RUN docker-php-ext-install pdo pdo_sqlite
+# Install pdo_mysql
+RUN docker-php-ext-install pdo_mysql
 
 # Clean up to reduce image size
 RUN apk del git gcc g++ make autoconf pkgconfig imagemagick-dev && \
