@@ -38,13 +38,13 @@ list($latlon, $zoom) = $renderer->fitBounds(new LatLon(53.39861676102, 9.77002),
 $gjson = file_get_contents(__DIR__."/hamburg.geojson");
 // Define style for the rendered geometries
 $style = [
-    'strokecolor' => '#3388ff',
-    'fillcolor' => '#3388ff3f',
-    'strokewidth' => 3,
-    'strokelinecap' => 'round',
-    'strokelinejoin' => 'round',
-    //'strokemiterlimit' => 10,
-    'pointradius' => 8,
+	'strokecolor' => '#3388ff',
+	'fillcolor' => '#3388ff3f',
+	'strokewidth' => 3,
+	'strokelinecap' => 'round',
+	'strokelinejoin' => 'round',
+	//'strokemiterlimit' => 10,
+	'pointradius' => 8,
 ];
 $renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
 
@@ -54,6 +54,6 @@ $mapimage = $output['image'];
 
 if($imgfactory != null)
 {
-    $imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map3.webp");
-    $imgfactory->clearImage($mapimage);
+	$imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map3.webp");
+	$imgfactory->clearImage($mapimage);
 }

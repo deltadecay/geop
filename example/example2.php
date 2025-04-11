@@ -24,10 +24,10 @@ $cachedir = __DIR__."/tilecache/";
 // https://www.terrestris.de/en/openstreetmap-wms/
 // See layers in the xml at https://ows.terrestris.de/osm/service?service=WMS&version=1.1.1&request=GetCapabilities
 $tileservice = new WMSTileService([
-    "url" => "https://ows.terrestris.de/osm/service?",
-    "layers" => "OSM-WMS",
-    //"headers" => ["" => ""]
-    ], new FileTileCache('terrestris-osm_crs4326', $cachedir));
+	"url" => "https://ows.terrestris.de/osm/service?",
+	"layers" => "OSM-WMS",
+	//"headers" => ["" => ""]
+	], new FileTileCache('terrestris-osm_crs4326', $cachedir));
 
 $tileservice->setUserAgent("MakeMapApp v1.0");
 
@@ -47,6 +47,6 @@ $mapimage = $output['image'];
 
 if($imgfactory != null)
 {
-    $imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map2.webp");
-    $imgfactory->clearImage($mapimage);
+	$imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map2.webp");
+	$imgfactory->clearImage($mapimage);
 }

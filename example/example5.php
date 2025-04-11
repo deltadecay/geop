@@ -57,13 +57,13 @@ list($latlon, $zoom) = $renderer->fitBounds(new LatLon(-15.54536165388916, 176.6
 $gjson = file_get_contents(__DIR__."/fiji.geojson");
 // Define style for the rendered geometries
 $style = [
-    'strokecolor' => '#3388ff',
-    'fillcolor' => '#3388ff3f',
-    'strokewidth' => 1,
-    'strokelinecap' => 'round',
-    'strokelinejoin' => 'round',
-    //'strokemiterlimit' => 10,
-    'pointradius' => 8,
+	'strokecolor' => '#3388ff',
+	'fillcolor' => '#3388ff3f',
+	'strokewidth' => 1,
+	'strokelinecap' => 'round',
+	'strokelinejoin' => 'round',
+	//'strokemiterlimit' => 10,
+	'pointradius' => 8,
 ];
 $renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
 
@@ -73,6 +73,6 @@ $mapimage = $output['image'];
 
 if($imgfactory != null)
 {
-    $imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map5.webp");
-    $imgfactory->clearImage($mapimage);
+	$imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map5.webp");
+	$imgfactory->clearImage($mapimage);
 }

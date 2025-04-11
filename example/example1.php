@@ -37,6 +37,6 @@ $mapimage = $output['image'];
 
 if($imgfactory != null)
 {
-    $imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map1.webp");
-    $imgfactory->clearImage($mapimage);
+	$imgfactory->saveImageToFile($mapimage, __DIR__."/../assets/map1.webp");
+	$imgfactory->clearImage($mapimage);
 }

@@ -118,15 +118,15 @@ class HttpClient
 
 function http_get($url, $headers = "")
 {
-    $httpClient = new HttpClient();
-    $response = $httpClient->request("GET", $url, $headers);
-    return $response;
+	$httpClient = new HttpClient();
+	$response = $httpClient->request("GET", $url, $headers);
+	return $response;
 }
 
 function http_post($url, $headers = "", $postdata = "")
 {
-    $httpClient = new HttpClient();
-    $response = $httpClient->request("POST", $url, $headers, $postdata);
-    return $response;
+	$httpClient = new HttpClient();
+	$response = $httpClient->request("POST", $url, $headers, $postdata);
+	return $response;
 }
 
