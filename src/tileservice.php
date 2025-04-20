@@ -76,7 +76,7 @@ class TileService
 
 		$this->cache->setFormat($this->getImageFormat());
 
-		if($this->cache->hasTile($x, $y, $z) && $usecache)
+		if($usecache && $this->cache->hasTile($x, $y, $z)) 
 		{
 			if($debug) 
 				echo "Load /$z/$x/$y from cache\n";
@@ -89,10 +89,10 @@ class TileService
 		if($debug) 
 			echo "Fetch /$z/$x/$y from $url\n";
 
-		$res = http_get($url , $headers);
+		$res = http_get($url, $headers);
 
 		$blob = null;
-		if ($res['httpcode'] == 200)
+		if($res['httpcode'] == 200)
 		{
 			$blob = $res['body'];
 			$mimetype = isset($res['headers']['content-type']) ? $res['headers']['content-type'][0] : '';
@@ -101,9 +101,12 @@ class TileService
 			$blobimgformat = $this->identifyBlobImageFormat($blob);
 			if($blobimgformat !== false)
 			{
-				if($debug) 
-					echo "Save /$z/$x/$y to cache ($blobimgformat)\n";
-				$this->cache->saveTile($x, $y, $z, $blob);
+				if($usecache)
+				{
+					if($debug) 
+						echo "Save /$z/$x/$y to cache ($blobimgformat)\n";
+					$this->cache->saveTile($x, $y, $z, $blob);
+				}
 			}
 			else
 			{

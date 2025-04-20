@@ -2,8 +2,6 @@
 
 namespace geop;
 
-require_once(__DIR__."/http.php");
-
 
 function join_paths(...$args) 
 {
