@@ -33,11 +33,13 @@ class TileService
 		$this->useragent = $useragent;
 	}
 
+	/*
 	protected function getImageFormat()
 	{
-		$format = pathinfo($this->options['url'], PATHINFO_EXTENSION);
-		return $format;
-	}
+		//$format = pathinfo($this->options['url'], PATHINFO_EXTENSION);
+		//return $format;
+		return "";
+	}*/
 
 	protected function makeUrl(Map $map, Point $tile, $zoom)
 	{
@@ -74,7 +76,7 @@ class TileService
 		$debug = isset($this->options['debug']) ? !!$this->options['debug'] : false;
 		$usecache = isset($this->options['usecache']) ? !!$this->options['usecache'] : true;
 
-		$this->cache->setFormat($this->getImageFormat());
+		//$this->cache->setFormat($this->getImageFormat());
 
 		if($usecache && $this->cache->hasTile($x, $y, $z)) 
 		{
@@ -172,11 +174,11 @@ class TileService
 
 class WMSTileService extends TileService
 {
-	protected function getImageFormat()
+	/*protected function getImageFormat()
 	{
 		// Do not use file extension in the cache
 		return "";
-	}
+	}*/
 
 	protected function makeUrl(Map $map, Point $tile, $zoom)
 	{
