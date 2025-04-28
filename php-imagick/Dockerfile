@@ -11,6 +11,8 @@ RUN apk add --update --no-cache \
     imagemagick-svg \
     imagemagick-tiff \
     imagemagick-webp \
+    imagemagick-heic \
+    imagemagick-jxl \
     imagemagick-dev \
     gcc \
     g++ \
