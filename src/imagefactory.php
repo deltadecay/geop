@@ -4,6 +4,7 @@
 namespace geop;
 
 require_once(__DIR__."/geometry.php");
+require_once(__DIR__."/imageblob.php");
 
 interface ImageFactory
 {
@@ -54,8 +55,21 @@ class ImagickFactory implements ImageFactory
 	{
 		if($blob != null)
 		{
-			$image = new \Imagick();
-			$image->readImageBlob($blob);
+			try 
+			{
+				$image = new \Imagick();
+				$image->readImageBlob($blob);
+			}
+			catch(\ImagickException $ime)
+			{
+				echo "ImagickFactory::newImageFromBlob(): ".$ime->getMessage().PHP_EOL;
+				$imgformat = imageblob_identify($blob);
+				if($imgformat !== false)
+				{
+					echo "Imagick not built to support decoding: $imgformat".PHP_EOL;
+				}
+				$image = null;
+			}
 			return $image;
 		}
 		return null;
