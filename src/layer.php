@@ -16,21 +16,109 @@ abstract class Layer
 	}
 }
 
-/*
+
 class TileLayer extends Layer
 {
 	protected $tileservice = null;
-	public function __construct(TileService $tileservice)
+	protected $options = [];
+
+	public function __construct(TileService $tileservice, $options = [])
 	{
+		if(!is_array($options))
+		{
+			$options = [];
+		}
+		if($tileservice == null)
+		{
+			throw new \Exception("Tile service not provided");
+		}
 		$this->tileservice = $tileservice;
 	}
 
 	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
 	{
+		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
+
+		$izoom = intval($zoom);
+		$cp_pixel = $map->latLonToMap($latlon, $izoom);
+		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+		$bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
+
+		// Note! These tile coordinates can be outside map bounds, negative or >= getNumTiles
+		$topleft_tile = $map->getTile($topleft_pixel, $izoom);
+		$bottomright_tile = $map->getTile($bottomright_pixel, $izoom);
+
+		// This is the image with all the tiles fitting completely
+		// Later it will be cropped to render width and height
+		$mapimgwidth = $map->getTileSize() * ($bottomright_tile->x - $topleft_tile->x + 1);
+		$mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
+
+		$tilemapimage = null;
+		if ($imagefactory != null)
+		{
+			$tilemapimage = $imagefactory->newImage($mapimgwidth, $mapimgheight, 'transparent');
+		}
+
+		// This is the size of the map in valid tiles
+		$ntiles = $map->getNumTiles($izoom);
+		// but the tiles we iterate over can be negative
+		// but we want to wrap all negative tiles to valid tiles along longitude
+		// tmulx is the value to add to any negative tile before modulo to get
+		// a valid tile, in the range [0, ntiles-1] (see below)
+		$tmulx = intval(abs($topleft_tile->x)) * $ntiles;
+
+		// Fetch and compose tiles into the map image row by row
+		$offsety = 0;
+		for($ty=$topleft_tile->y; $ty<=$bottomright_tile->y; $ty++)
+		{
+			$offsetx = 0;
+			for($tx=$topleft_tile->x; $tx<=$bottomright_tile->x; $tx++)
+			{
+				// wrap tiles along longitude
+				$wrapped_tx = ($tx + $tmulx) % $ntiles;
+				$tile = new Point($wrapped_tx, $ty);
+				if($map->isTileValid($tile, $izoom))
+				{
+					$imgblob = $this->tileservice->fetchMapTile($map, $tile, $izoom);
+					if($imgblob != null && $imagefactory != null)
+					{
+						$tileimage = $imagefactory->newImageFromBlob($imgblob);
+						$imagefactory->drawImageIntoImage($tilemapimage, $tileimage, $offsetx, $offsety);
+						$imagefactory->clearImage($tileimage);
+					}
+				}
+				$offsetx += $map->getTileSize();
+			}
+			$offsety += $map->getTileSize();
+		}
+
+		$scale = pow(2, $zoom - $izoom);
+		if($scale > 1.0)
+		{
+			if ($imagefactory != null)
+			{
+				$imagefactory->resizeImage($tilemapimage, intval($mapimgwidth*$scale), intval($mapimgheight*$scale));
+			}
+		}
+
+		$midp_offsetx = ($render_width*$scale - $render_width) / 2;
+		$midp_offsety = ($render_height*$scale - $render_height) / 2;
+
+		$crop_offsetx = intval(($topleft_pixel->x - $map->getTileSize() * $topleft_tile->x) * $scale + $midp_offsetx);
+		$crop_offsety = intval(($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y) * $scale + $midp_offsety);
+
+
+		if ($imagefactory != null)
+		{
+			//$imagefactory->cropImage($tilemapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
+			//$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, 0, 0);
+
+			$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, -$crop_offsetx, -$crop_offsety);
+		}
 
 	}
 }
-*/
+
 
 class GeoJsonLayer extends Layer
 {

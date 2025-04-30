@@ -10,6 +10,7 @@ use \geop\CRS_EPSG3857;
 use \geop\TileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
 
@@ -29,7 +30,8 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
-$renderer = new MapRenderer($map, $tileservice, $imgfactory);
+$renderer = new MapRenderer($map, $imgfactory);
+$renderer->addLayer(new TileLayer($tileservice));
 
 // Bounding box around Hamburg, Germany
 list($latlon, $zoom) = $renderer->fitBounds(new LatLon(53.39861676102, 9.77002), new LatLon(53.705006628648, 10.211535), $render_width, $render_height);

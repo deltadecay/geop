@@ -10,6 +10,7 @@ use \geop\CRS_EPSG4326;
 use \geop\WMSTileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\TileLayer;
 use \geop\ImagickFactory;
 
 // Render a map with WMS tiles in CRS EPSG:4326 by fitting a boundingbox into view. 
@@ -36,7 +37,8 @@ $map = new Map(new CRS_EPSG4326());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
-$renderer = new MapRenderer($map, $tileservice, $imgfactory);
+$renderer = new MapRenderer($map, $imgfactory);
+$renderer->addLayer(new TileLayer($tileservice));
 
 // Bounding box around Italy
 // Given corners of a boundingbox, compute the center and zoom which fits the boundingbox in the render size

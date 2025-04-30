@@ -23,6 +23,7 @@ use \geop\CRS_EPSG3857;
 use \geop\TileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\TileLayer;
 use \geop\ImagickFactory;
 
 $latlon = new LatLon(41.381073, 2.173224);
@@ -36,7 +37,8 @@ $map = new Map(new CRS_EPSG3857());
 $map->setTileSize(256);
 $imgfactory = new ImagickFactory();
 
-$renderer = new MapRenderer($map, $tileservice, $imgfactory);
+$renderer = new MapRenderer($map, $imgfactory);
+$renderer->addLayer(new TileLayer($tileservice));
 $output = $renderer->renderMap($latlon, $zoom, 640, 400);
 $imgfactory->saveImageToFile($output['image'], "assets/map1.webp");
 ```

@@ -11,6 +11,7 @@ use \geop\TileService;
 use \geop\WMSTileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
 
@@ -70,8 +71,8 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
-$renderer = new MapRenderer($map, $tileservice, $imgfactory);
-
+$renderer = new MapRenderer($map, $imgfactory);
+$renderer->addLayer(new TileLayer($tileservice));
 
 // Get center and zoom level from given lat lon bounds
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(35.999914, -9.30555), new LatLon(43.79495, 4.32936), $render_width-25, $render_height-25);

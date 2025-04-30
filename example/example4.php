@@ -11,6 +11,7 @@ use \geop\CRS_EPSG3857;
 use \geop\TileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
 
@@ -33,7 +34,8 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
-$renderer = new MapRenderer($map, $tileservice, $imgfactory);
+$renderer = new MapRenderer($map, $imgfactory);
+$renderer->addLayer(new TileLayer($tileservice));
 
 // Load geojson with circles
 $data = file_get_contents(__DIR__."/circles.geojson");
