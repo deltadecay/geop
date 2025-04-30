@@ -11,6 +11,7 @@ use \geop\TileService;
 use \geop\WMSTileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
 
 
@@ -30,6 +31,16 @@ $tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}
 
 // © Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL
 $tileservice = new TileService(["url" => "https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png"], new FileTileCache('carto', $cachedir));
+
+/*
+// OpenStreetMap contributors, by Wikimedia
+$tileservice = new TileService([
+    "url" => "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png", 
+    "headers" => ["Referer" => "https://wikishootme.toolforge.org/"], 
+    "usecache" => true,
+    "debug" => true], new FileTileCache('osm-wikimedia', $cachedir));
+*/
+
 
 // © Esri, Maxar, Earthstar Geographics, and the GIS User Community
 //$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_imagery', $cachedir));
@@ -73,7 +84,7 @@ $renderer = new MapRenderer($map, $tileservice, $imgfactory);
 
 
 
-list($latlon, $zoom) = $renderer->fitBounds(new LatLon(-15.54536165388916, 176.6282312733598), new LatLon(-19.657268304867458, 181.86003737491774), $render_width-25, $render_height-25);
+//list($latlon, $zoom) = $renderer->fitBounds(new LatLon(-15.54536165388916, 176.6282312733598), new LatLon(-19.657268304867458, 181.86003737491774), $render_width-25, $render_height-25);
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(-16.668863248640264, -180.19396575096454), new LatLon(-17.0650454078054, -179.79589593891578), $render_width-680, $render_height-680);
 
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(-15.54536165388916, 173.6282312733598), new LatLon(-19.657268304867458, 179.9995), $render_width, $render_height);
@@ -91,7 +102,8 @@ $style = [
     //'strokemiterlimit' => 10,
     'pointradius' => 10,
 ];
-$renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
+//$renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
+$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]));
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
 $mapimage = $output['image'];

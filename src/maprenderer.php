@@ -6,6 +6,7 @@ require_once(__DIR__."/tileservice.php");
 require_once(__DIR__."/imagefactory.php");
 require_once(__DIR__."/map.php");
 require_once(__DIR__."/geometry.php");
+require_once(__DIR__."/layer.php");
 
 class MapRenderer
 {
@@ -66,41 +67,9 @@ class MapRenderer
 		return [$latlon, $zoom];
 	}
 
-
-	public function addGeoJsonLayer($geojson, $options = [])
+	public function addLayer(Layer $layer)
 	{
-		if(!is_array($options))
-		{
-			$options = [];
-		}
-		if(is_string($geojson))
-		{
-			$geojson = json_decode($geojson, true);
-		}
-		$featurecoll = null;
-		$type = strtolower($geojson['type']);
-		if($type == "featurecollection")
-		{
-			$featurecoll = $geojson;
-		}
-		elseif($type == "feature")
-		{
-			$featurecoll = ["type" => "FeatureCollection", "features" => [ $geojson ]];
-		}
-		elseif(in_array($type, ["point", "multipoint", "linestring", "multilinestring", "polygon", "multipolygon", "geometrycollection"]))
-		{
-			$featurecoll = [
-				"type" => "FeatureCollection", 
-				"features" => [
-					[ "type" => "Feature", "geometry" => $geojson, /*"properties" => ["name" => ""] */ ]
-				]
-			];
-		}
-		
-		if($featurecoll != null)
-		{
-			$this->layers[] = ["type" => "geojson", "geojson" => $featurecoll, "options" => $options]; 
-		}
+		$this->layers[] = $layer;
 	}
 
 
@@ -205,184 +174,12 @@ class MapRenderer
 		$topleft = $map->mapToLatLon($topleft_pixel, $zoom);
 		$bottomright = $map->mapToLatLon($bottomright_pixel, $zoom);
 
-
-		// Handle the wrapped copies of geometries to render
-		$wrapstart = floor($topleft_pixel->x / $map->mapSize($zoom));
-		$wrapend = floor($bottomright_pixel->x / $map->mapSize($zoom));
-		$maxwrap = max(abs($wrapstart), $wrapend);
-		// If render only main, still include both -1 and 1 as there can be geometries at the boundaries
-		// Note! This forces always three renders 
-		if($maxwrap == 0)
-			$maxwrap = 1;
-		$wrapcopystart = -$maxwrap;
-		$wrapcopyend = $maxwrap; 
-
-		// The map wraps at boundary -180/180 longitude. Some geometries can be represented
-		// at longitude around 180 while others around -180, but these should render
-		// in the same map. Easiest solution is to render multiple copies of the geometries
-		for($wrapcopy=$wrapcopystart; $wrapcopy<=$wrapcopyend; $wrapcopy++)
+		foreach ($this->layers as $layer)
 		{
-			//echo "WrapCopy=$wrapcopy\n";
-			// Translate with the width of map for each wrap copy. 
-			// wrapcopy=0 is the original map
-			$originMatrix = Matrix::translation(-($topleft_pixel->x + $wrapcopy * $map->mapSize($zoom)), -$topleft_pixel->y);
-				
-			// Draw layers
-			$drawing = null;
-			if ($this->imagefactory != null)
-			{
-				$drawing = $this->imagefactory->newDrawing($mapimage);
-				$drawing->drawTransformation($originMatrix);
-			}
-			foreach ($this->layers as $layer)
-			{
-				$options = $layer['options'];
-				if ($drawing != null && isset($options['style']))
-				{
-					$drawing->drawStyle($options['style']);
-				}
-				if($layer['type'] == 'geojson')
-				{
-					$geojson = $layer['geojson'];
-					$this->drawGeoJsonLayer($drawing, $geojson, $options, $map, $zoom);
-				}
-			}
-			if ($this->imagefactory != null)
-			{
-				$this->imagefactory->drawDrawingIntoImage($mapimage, $drawing);
-			}
+			$layer->render($this->imagefactory, $mapimage, $map, $latlon, $zoom);
 		}
 
 		return ['image' => $mapimage, 'pos' => new Point($x, $y), 'topleft' => $topleft, 'bottomright' => $bottomright];
-	}
-
-
-	private function drawGeoJsonLayer($drawing, $geojson, $options, $map, $zoom)
-	{
-		$type = strtolower($geojson['type']);
-		if($type == "featurecollection")
-		{
-			foreach($geojson['features'] as $feature)
-			{
-				$type = strtolower($feature['type']);
-				if($type == "feature")
-				{
-					$geom = $feature['geometry'];
-					$this->drawGeometry($drawing, $geom, $options, $map, $zoom);
-				}
-			}
-		}
-	}
-
-
-
-	private function drawGeometry($drawing, $geom, $options, $map, $zoom)
-	{
-		$type = strtolower($geom['type']);
-		if($type == "point")
-		{
-			$point = $geom['coordinates'];
-			$this->drawPoint($drawing, $point, $options, $map, $zoom);
-		}
-		elseif($type == "multipoint")
-		{
-			foreach($geom['coordinates'] as $point)
-			{
-				$this->drawPoint($drawing, $point, $options, $map, $zoom);
-			}
-		}
-		elseif($type == "linestring")
-		{
-			$linestring = $geom['coordinates'];
-			$this->drawLineString($drawing, $linestring, $options, $map, $zoom);
-		}
-		elseif($type == "multilinestring")
-		{
-			foreach($geom['coordinates'] as $linestring)
-			{
-				$this->drawLineString($drawing, $linestring, $options, $map, $zoom);
-			}
-		}
-		elseif($type == "polygon")
-		{
-			$polygon = $geom['coordinates'];
-			$this->drawPolygon($drawing, $polygon, $options, $map, $zoom);
-		}
-		elseif($type == "multipolygon")
-		{
-			foreach($geom['coordinates'] as $polygon)
-			{
-				$this->drawPolygon($drawing, $polygon, $options, $map, $zoom);
-			}
-		}
-		elseif($type == "geometrycollection")
-		{
-			foreach($geom['geometries'] as $geometry)
-			{
-				$this->drawGeometry($drawing, $geometry, $options, $map, $zoom);
-			}
-		}
-	}
-
-	private function getLatLonIndices($options)
-	{
-		$LAT = 1;
-		$LON = 0;
-		if(isset($options['swapxy']) && !!$options['swapxy'])
-		{
-			$LAT = 0;
-			$LON = 1;
-		}
-		return [$LAT, $LON];
-	}
-
-	private function drawPoint($drawing, $point, $options, $map, $zoom)
-	{
-		list($LAT, $LON) = $this->getLatLonIndices($options);
-
-		$pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-		if ($drawing != null)
-		{
-			$radius = isset($options['style']['pointradius']) ? $options['style']['pointradius'] : 1;
-			$drawing->drawCircle($pixel, $radius);
-		}
-	}
-
-	private function drawLineString($drawing, $linestring, $options, $map, $zoom)
-	{
-		list($LAT, $LON) = $this->getLatLonIndices($options);
-
-		$polyline_pixel = [];
-		foreach($linestring as $point)
-		{
-			$pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-			$polyline_pixel[] = $pixel; 
-		}
-		if ($drawing != null)
-		{
-			$drawing->drawPolyline($polyline_pixel);
-		}
-	}
-
-	private function drawPolygon($drawing, $polygon, $options, $map, $zoom)
-	{
-		list($LAT, $LON) = $this->getLatLonIndices($options);
-
-		$poly_pixel = [];
-		foreach($polygon as $ring)
-		{
-			$ring_pixel = [];
-			foreach($ring as $point)
-			{
-				$pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-				$ring_pixel[] = $pixel;
-			}
-			$poly_pixel[] = $ring_pixel;
-		}
-		if ($drawing != null)
-		{
-			$drawing->drawPolygon($poly_pixel);
-		}
 	}
 
 

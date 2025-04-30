@@ -94,6 +94,9 @@ $imgfactory->saveImageToFile($output['image'], "assets/map2.webp");
 ## Geojson
 
 The map renderer supports adding a geojson layer:
+```php
+use \geop\GeoJsonLayer;
+```
 
 ```php
 // Bounding box around Hamburg, Germany
@@ -112,7 +115,7 @@ $style = [
 	//'strokemiterlimit' => 10,
 	'pointradius' => 8,
 ];
-$renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
+$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]));
 ```
 
 ![Map](assets/map3.webp)

@@ -11,6 +11,7 @@ use \geop\CRS_EPSG3857;
 use \geop\TileService;
 use \geop\FileTileCache;
 use \geop\MapRenderer;
+use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
 
 // This example illustrates the Tissot's indicatrix of deformation of the 
@@ -48,7 +49,7 @@ $style = [
 	//'strokemiterlimit' => 10,
 	'pointradius' => 8,
 ];
-$renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
+$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]));
 
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
