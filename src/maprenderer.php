@@ -232,14 +232,14 @@ class MapRenderer
 			if ($this->imagefactory != null)
 			{
 				$drawing = $this->imagefactory->newDrawing($mapimage);
-				$this->imagefactory->drawTransformation($drawing, $originMatrix);
+				$drawing->drawTransformation($originMatrix);
 			}
 			foreach ($this->layers as $layer)
 			{
 				$options = $layer['options'];
-				if ($this->imagefactory != null && isset($options['style']))
+				if ($drawing != null && isset($options['style']))
 				{
-					$this->imagefactory->drawStyle($drawing,$options['style']);
+					$drawing->drawStyle($options['style']);
 				}
 				if($layer['type'] == 'geojson')
 				{
@@ -341,10 +341,10 @@ class MapRenderer
 		list($LAT, $LON) = $this->getLatLonIndices($options);
 
 		$pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
-		if ($this->imagefactory != null)
+		if ($drawing != null)
 		{
 			$radius = isset($options['style']['pointradius']) ? $options['style']['pointradius'] : 1;
-			$this->imagefactory->drawCircle($drawing, $pixel, $radius);
+			$drawing->drawCircle($pixel, $radius);
 		}
 	}
 
@@ -358,9 +358,9 @@ class MapRenderer
 			$pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
 			$polyline_pixel[] = $pixel; 
 		}
-		if ($this->imagefactory != null)
+		if ($drawing != null)
 		{
-			$this->imagefactory->drawPolyline($drawing, $polyline_pixel);
+			$drawing->drawPolyline($polyline_pixel);
 		}
 	}
 
@@ -379,9 +379,9 @@ class MapRenderer
 			}
 			$poly_pixel[] = $ring_pixel;
 		}
-		if ($this->imagefactory != null)
+		if ($drawing != null)
 		{
-			$this->imagefactory->drawPolygon($drawing, $poly_pixel);
+			$drawing->drawPolygon($poly_pixel);
 		}
 	}
 

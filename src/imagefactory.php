@@ -22,16 +22,21 @@ interface ImageFactory
 	public function saveImageToFile($image, $filename, $format);
 
 	public function newDrawing($image);
-	public function drawStyle($drawing, $style);
 	public function drawDrawingIntoImage($image, $drawing);
-	public function drawPushState($drawing);
-	public function drawPopState($drawing);
-	public function drawTransformation($drawing, $matrix);
-	public function drawPolygon($drawing, $polygon);
-	public function drawPolyline($drawing, $polyline);
-	public function drawCircle($drawing, $point, $radius);
+
 }
 
+interface Drawing
+{
+	public function drawStyle($style);
+	public function drawPushState();
+	public function drawPopState();
+	public function drawTransformation($matrix);
+	public function drawPolygon($polygon);
+	public function drawPolyline($polyline);
+	public function drawCircle($point, $radius);
+	public function drawImage($x, $y, $width, $height, $image);
+}
 
 
 
@@ -142,13 +147,46 @@ class ImagickFactory implements ImageFactory
 
 	public function newDrawing($image)
 	{
+		/*
 		$drawing = new \ImagickDraw();
 		// Apply default style
 		$this->drawStyle($drawing, null);
-		return $drawing;
+		return $drawing;*/
+		return new ImagickDrawing($image);
 	}
 
-	public function drawStyle($drawing, $style)
+	public function drawDrawingIntoImage($image, $drawing)
+	{
+		if($image != null && $drawing != null)
+		{
+			if($drawing instanceof ImagickDrawing)
+			{
+				//echo $drawing->getVectorGraphics();
+				$image->drawImage($drawing->getInternalDrawing());
+			}
+		}
+	}
+}
+
+
+class ImagickDrawing implements Drawing
+{
+	private $drawing = null;
+
+	public function getInternalDrawing()
+	{
+		return $this->drawing;
+	}
+
+	public function __construct($image)
+	{
+		$this->drawing = new \ImagickDraw();
+		// Apply default style
+		$this->drawStyle(null);
+	}
+
+
+	public function drawStyle($style)
 	{
 		$strokecolor = isset($style['strokecolor']) ? $style['strokecolor'] : '#3388ff';
 		$fillcolor = isset($style['fillcolor']) ? $style['fillcolor'] : '#3388ff3f'; 
@@ -174,6 +212,7 @@ class ImagickFactory implements ImageFactory
 		$linejoin = isset($linejoins[$strokelinejoin]) ? $linejoins[$strokelinejoin] : \Imagick::LINEJOIN_MITER;
 		$miterlimit = isset($style['strokemiterlimit']) ? $style['strokemiterlimit'] : (isset($style['strokemitrelimit']) ? $style['strokemitrelimit'] : 10);
 
+		$drawing = $this->drawing;
 		if($drawing != null)
 		{
 			$drawing->setStrokeAntialias(true);
@@ -189,32 +228,26 @@ class ImagickFactory implements ImageFactory
 		}
 	}
 
-	public function drawDrawingIntoImage($image, $drawing)
-	{
-		if($image != null && $drawing != null)
-		{
-			//echo $drawing->getVectorGraphics();
-			$image->drawImage($drawing);
-		}
-	}
 
-
-	public function drawPushState($drawing)
+	public function drawPushState()
 	{
+		$drawing = $this->drawing;
 		if($drawing != null)
 		{
 			$drawing->push();
 		}
 	}
-	public function drawPopState($drawing)
+	public function drawPopState()
 	{
+		$drawing = $this->drawing;
 		if($drawing != null)
 		{
 			$drawing->pop();
 		}
 	}
-	public function drawTransformation($drawing, $matrix = null)
+	public function drawTransformation($matrix = null)
 	{
+		$drawing = $this->drawing;
 		if($drawing != null && $matrix != null)
 		{
 			if($matrix instanceof Matrix)
@@ -236,8 +269,9 @@ class ImagickFactory implements ImageFactory
 		return ['x' => $p->x, 'y' => $p->y];
 	}
 
-	public function drawPolygon($drawing, $polygon)
+	public function drawPolygon($polygon)
 	{
+		$drawing = $this->drawing;
 		if($drawing != null)
 		{
 			$savedfillrule = $drawing->getFillRule();
@@ -273,8 +307,9 @@ class ImagickFactory implements ImageFactory
 		}
 	}
 
-	public function drawPolyline($drawing, $polyline)
+	public function drawPolyline($polyline)
 	{
+		$drawing = $this->drawing;
 		if($drawing != null)
 		{
 
@@ -288,8 +323,9 @@ class ImagickFactory implements ImageFactory
 		}
 	}
 
-	public function drawCircle($drawing, $point, $radius)
+	public function drawCircle($point, $radius)
 	{
+		$drawing = $this->drawing;
 		if($drawing != null)
 		{
 			$x = $point->x;
@@ -297,6 +333,16 @@ class ImagickFactory implements ImageFactory
 			$drawing->circle($x, $y, $x + $radius, $y + $radius);
 		}
 	}
+
+	public function drawImage($x, $y, $width, $height, $image)
+	{
+		$drawing = $this->drawing;
+		if($drawing != null && $image != null)
+		{
+			$drawing->composite(\Imagick::COMPOSITE_SRCOVER, $x, $y, $width, $height, $image);
+		}
+	}
 }
+
 
 endif;
