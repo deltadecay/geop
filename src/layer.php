@@ -37,6 +37,10 @@ class TileLayer extends Layer
 
 	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
 	{
+		if ($imagefactory == null)
+		{
+			return;
+		}
 		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
 
 		$izoom = intval($zoom);
@@ -54,10 +58,7 @@ class TileLayer extends Layer
 		$mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
 
 		$tilemapimage = null;
-		if ($imagefactory != null)
-		{
-			$tilemapimage = $imagefactory->newImage($mapimgwidth, $mapimgheight, 'transparent');
-		}
+		$tilemapimage = $imagefactory->newImage($mapimgwidth, $mapimgheight, 'transparent');
 
 		// This is the size of the map in valid tiles
 		$ntiles = $map->getNumTiles($izoom);
@@ -80,7 +81,7 @@ class TileLayer extends Layer
 				if($map->isTileValid($tile, $izoom))
 				{
 					$imgblob = $this->tileservice->fetchMapTile($map, $tile, $izoom);
-					if($imgblob != null && $imagefactory != null)
+					if($imgblob != null)
 					{
 						$tileimage = $imagefactory->newImageFromBlob($imgblob);
 						$imagefactory->drawImageIntoImage($tilemapimage, $tileimage, $offsetx, $offsety);
@@ -95,10 +96,7 @@ class TileLayer extends Layer
 		$scale = pow(2, $zoom - $izoom);
 		if($scale > 1.0)
 		{
-			if ($imagefactory != null)
-			{
-				$imagefactory->resizeImage($tilemapimage, intval($mapimgwidth*$scale), intval($mapimgheight*$scale));
-			}
+			$imagefactory->resizeImage($tilemapimage, intval($mapimgwidth*$scale), intval($mapimgheight*$scale));
 		}
 
 		$midp_offsetx = ($render_width*$scale - $render_width) / 2;
@@ -108,14 +106,9 @@ class TileLayer extends Layer
 		$crop_offsety = intval(($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y) * $scale + $midp_offsety);
 
 
-		if ($imagefactory != null)
-		{
-			//$imagefactory->cropImage($tilemapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
-			//$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, 0, 0);
-
-			$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, -$crop_offsetx, -$crop_offsety);
-		}
-
+		//$imagefactory->cropImage($tilemapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
+		//$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, 0, 0);
+		$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, -$crop_offsetx, -$crop_offsety);
 	}
 }
 
