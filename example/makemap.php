@@ -20,7 +20,7 @@ use \geop\ImagickFactory;
 $latlon = new LatLon(41.381073, 2.173224);
 //$latlon = new LatLon(0, 0);
 //$zoom = 1.584962;
-$zoom = 17;
+$zoom = 5;
 $render_width = 768;
 $render_height = 768;
 
@@ -105,8 +105,12 @@ $style = [
 ];
 $renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' => 10, 'style' => $style]));
 
-$msz = 2;
-$renderer->addLayer(new MarkerLayer($latlon, [
+$markersLatLons = [
+	new LatLon(41.381073, 2.173224), // Barcelona
+	new LatLon(40.416682, -3.703628), // Madrid
+];
+$msz = 1;
+$renderer->addLayer(new MarkerLayer($markersLatLons, [
 	// Marker from image when markericon set to path of image 
 	//'markericon' => __DIR__."/../assets/marker-icon.png",
 	'shadowicon' => __DIR__."/../assets/marker-shadow.png",
@@ -116,7 +120,7 @@ $renderer->addLayer(new MarkerLayer($latlon, [
 	'shadoworigin' => [$msz*12, $msz*40],
 	// If markericon not set, a marker symbol is rendered with size 
 	//'markersize' => [$msz*20, $msz*30],
-	'innerradius' => 18,
+	'innerradius' => $msz*9,
 	'innerfill' => 'rgba(90%, 50%, 20%, 0.5)',
 ]));
 

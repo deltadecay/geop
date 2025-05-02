@@ -349,17 +349,24 @@ class GeoJsonLayer extends Layer
 
 class MarkerLayer extends Layer
 {
-	protected $markerLatlon = null;
+	protected $markerLatlons = null;
 	protected $options = [];
 
-	public function __construct($markerLatlon, $options = [])
+	public function __construct($markerLatlons, $options = [])
 	{
 		if(!is_array($options))
 		{
 			$options = [];
 		}
 		$this->options = $options;
-		$this->markerLatlon = $markerLatlon;
+		if(!is_array($markerLatlons))
+		{
+			if($markerLatlons instanceof LatLon)
+			{
+				$markerLatlons = [ $markerLatlons ];
+			}
+		}
+		$this->markerLatlons = $markerLatlons;
 	}
 
 	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
@@ -375,9 +382,7 @@ class MarkerLayer extends Layer
 		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
 		
 		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
-		$markerPosOnMap = $map->latLonToMap($this->markerLatlon, $zoom);
-		//$pos = $originMatrix->transform($markerPosOnMap);
-		$pos = $markerPosOnMap;
+
 
 		/**
 		 * @var Canvas $drawing
@@ -385,45 +390,57 @@ class MarkerLayer extends Layer
 		$drawing = $imagefactory->newDrawing($mapimage);
 		$drawing->setTransformation($originMatrix);
 
+		$marker_icon = null;
+		$marker_shadow = null;
 		if(isset($options['markericon']))
 		{
 			$marker_icon = $imagefactory->newImageFromFile($options['markericon']);
-			if($marker_icon != null)
+			if(isset($options['shadowicon']))
 			{
-				$markersize = $imagefactory->getImageSize($marker_icon);
-				$custommarkersize = isset($options['markersize']) ? $options['markersize'] : $markersize;
-				if($markersize != $custommarkersize)
-				{
-					$imagefactory->resizeImage($marker_icon, $custommarkersize[0], $custommarkersize[1]);
-				}	
-				if(isset($options['shadowicon']))
-				{
-					$marker_shadow = $imagefactory->newImageFromFile($options['shadowicon']);
-					if($marker_shadow != null)
-					{
-						$shadowsize = $imagefactory->getImageSize($marker_shadow);
-						$customshadowsize = isset($options['shadowsize']) ? $options['shadowsize'] : $shadowsize;
-						if($shadowsize != $customshadowsize)
-						{
-							$imagefactory->resizeImage($marker_shadow, $customshadowsize[0], $customshadowsize[1]);
-						}	
-						$shadoworigin = isset($options['shadoworigin']) ? new Point($options['shadoworigin']) : new Point(0, 0);
-						$x = intval($pos->x - $shadoworigin->x);
-						$y = intval($pos->y - $shadoworigin->y);
-						//$imagefactory->drawImageIntoImage($mapimage, $marker_shadow, $x, $y);
+				$marker_shadow = $imagefactory->newImageFromFile($options['shadowicon']);
+			}
+		}
 
-						$drawing->drawImage(new Point($x, $y), $customshadowsize[0], $customshadowsize[1], $marker_shadow);
-					}
+		if($marker_icon != null)
+		{
+			$markersize = $imagefactory->getImageSize($marker_icon);
+			$custommarkersize = isset($options['markersize']) ? $options['markersize'] : $markersize;
+			// No need to resize since drawImage draws the size specified
+			/*if($markersize != $custommarkersize)
+			{
+				$imagefactory->resizeImage($marker_icon, $custommarkersize[0], $custommarkersize[1]);
+			}*/	
+			$customshadowsize = [0, 0];
+			if($marker_shadow != null)
+			{
+				$shadowsize = $imagefactory->getImageSize($marker_shadow);
+				$customshadowsize = isset($options['shadowsize']) ? $options['shadowsize'] : $shadowsize;
+				// No need to resize since drawImage draws the size specified
+				/*if($shadowsize != $customshadowsize)
+				{
+					$imagefactory->resizeImage($marker_shadow, $customshadowsize[0], $customshadowsize[1]);
+				}*/	
+			}
+
+			foreach($this->markerLatlons as $markerLatLon)
+			{
+				$pos = $map->latLonToMap($markerLatLon, $zoom);
+	
+				if($marker_shadow != null)
+				{
+					$shadoworigin = isset($options['shadoworigin']) ? new Point($options['shadoworigin']) : new Point(0, 0);
+					$x = intval($pos->x - $shadoworigin->x);
+					$y = intval($pos->y - $shadoworigin->y);
+
+					$drawing->drawImage(new Point($x, $y), $customshadowsize[0], $customshadowsize[1], $marker_shadow);
 				}
+				
 				$markerorigin = isset($options['markerorigin']) ? new Point($options['markerorigin']) : new Point(0, 0);
 				$x = intval($pos->x - $markerorigin->x);
 				$y = intval($pos->y - $markerorigin->y);
-				//$imagefactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
 
 				$drawing->drawImage(new Point($x, $y), $custommarkersize[0], $custommarkersize[1], $marker_icon);
-
 			}
-
 		}
 		else
 		{
@@ -461,30 +478,53 @@ class MarkerLayer extends Layer
 
 			$sz = $markerwidth;
 			$r = $sz / 2.0;
+			$tipy = $markerheight - $r; // Distance from tip to center of circle
 			$innerRadius = isset($options['innerradius']) ? $options['innerradius'] : $r / 2.0;
 			if($innerRadius > $r) 
+			{
 				$innerRadius = $r;
-			$tipy = $markerheight - $r;
-			$drawing->setTransformation(Matrix::translation($pos->x, $pos->y - $tipy));
-			$polypoints = [ new Point(0, $tipy) ];
+			}
+
+			// Build the marker symbol polygon in a local coordinate system
+			// with the tip in origin, x axis to the right and y axis up
+			$polypoints = [ new Point(0, 0) ];
 			for($a=215; $a>=-35; $a -= 5)
 			{
 				$ang = $a * M_PI / 180.0;
-				$polypoints[] = new Point($r * cos($ang), -$r * sin($ang));
+				$polypoints[] = new Point($r * cos($ang), $tipy + $r * sin($ang));
 			}
 			$polypoints[] = $polypoints[0];
 			$hole = [];
 			for($a=0; $a<=360; $a += 5)
 			{
 				$ang = $a * M_PI / 180.0;
-				$hole[] = new Point($innerRadius * cos($ang), -$innerRadius * sin($ang));
+				$hole[] = new Point($innerRadius * cos($ang), $tipy + $innerRadius * sin($ang));
 			}
 			$hole[] = $hole[0];
 
-			$drawing->drawPolygon([$polypoints, $hole]);
-			$style['fillcolor'] = isset($options['innerfill']) ? $options['innerfill'] : '#ffffff';
-			$drawing->setStyle($style);
-			$drawing->drawCircle(new Point(0, 0), $innerRadius);
+
+			foreach($this->markerLatlons as $markerLatLon)
+			{
+				$pos = $map->latLonToMap($markerLatLon, $zoom);
+		
+				// Save current state (transformation, fillcolor) so we can restore (by popping) for each of the markers
+				$drawing->pushState();
+				/* Note! Transformations read in reverse order: first reflect, then translate
+				$drawing->setTransformation(Matrix::translation($pos->x, $pos->y));
+				// The mapimage coordinates grow from top to bottom: (0,0) is in upper left, but our symbol
+				// is specified in a right hand coordinates system with x to right and y up,
+				// so we must reflect y when drawing the polygon
+				$drawing->setTransformation(Matrix::reflection(1, -1));
+				*/
+				// Instead of two transformations, we can combine them to one due to
+				// the translation coming after the reflection
+				$drawing->setTransformation(new Matrix(1, 0, $pos->x, 0, -1, $pos->y));
+				$drawing->drawPolygon([$polypoints, $hole]);
+				$style['fillcolor'] = isset($options['innerfill']) ? $options['innerfill'] : '#ffffff';
+				$drawing->setStyle($style);
+				$drawing->drawCircle(new Point(0, $tipy), $innerRadius);
+				$drawing->popState();
+			}
 		}
 
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
