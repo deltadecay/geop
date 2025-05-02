@@ -522,7 +522,7 @@ class MarkerLayer extends Layer
 				$drawing->drawPolygon([$polypoints, $hole]);
 				$style['fillcolor'] = isset($options['innerfill']) ? $options['innerfill'] : '#ffffff';
 				$drawing->setStyle($style);
-				$drawing->drawCircle(new Point(0, $tipy), $innerRadius);
+				$drawing->drawPolygon([$hole]);
 				$drawing->popState();
 			}
 		}
