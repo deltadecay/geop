@@ -461,6 +461,9 @@ class MarkerLayer extends Layer
 
 			$sz = $markerwidth;
 			$r = $sz / 2.0;
+			$innerRadius = isset($options['innerradius']) ? $options['innerradius'] : $r / 2.0;
+			if($innerRadius > $r) 
+				$innerRadius = $r;
 			$tipy = $markerheight - $r;
 			$drawing->setTransformation(Matrix::translation($pos->x, $pos->y - $tipy));
 			$polypoints = [ new Point(0, $tipy) ];
@@ -470,10 +473,18 @@ class MarkerLayer extends Layer
 				$polypoints[] = new Point($r * cos($ang), -$r * sin($ang));
 			}
 			$polypoints[] = $polypoints[0];
-			$drawing->drawPolygon([$polypoints]);
-			$style['fillcolor'] = '#ffffff';
+			$hole = [];
+			for($a=0; $a<=360; $a += 5)
+			{
+				$ang = $a * M_PI / 180.0;
+				$hole[] = new Point($innerRadius * cos($ang), -$innerRadius * sin($ang));
+			}
+			$hole[] = $hole[0];
+
+			$drawing->drawPolygon([$polypoints, $hole]);
+			$style['fillcolor'] = isset($options['innerfill']) ? $options['innerfill'] : '#ffffff';
 			$drawing->setStyle($style);
-			$drawing->drawCircle(new Point(0, 0), $r/2.0);
+			$drawing->drawCircle(new Point(0, 0), $innerRadius);
 		}
 
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
