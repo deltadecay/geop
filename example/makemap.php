@@ -13,6 +13,7 @@ use \geop\FileTileCache;
 use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\GeoJsonLayer;
+use \geop\MarkerLayer;
 use \geop\ImagickFactory;
 
 
@@ -36,10 +37,10 @@ $tileservice = new TileService(["url" => "https://cartodb-basemaps-c.global.ssl.
 /*
 // OpenStreetMap contributors, by Wikimedia
 $tileservice = new TileService([
-    "url" => "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png", 
-    "headers" => ["Referer" => "https://wikishootme.toolforge.org/"], 
-    "usecache" => true,
-    "debug" => true], new FileTileCache('osm-wikimedia', $cachedir));
+	"url" => "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png", 
+	"headers" => ["Referer" => "https://wikishootme.toolforge.org/"], 
+	"usecache" => true,
+	"debug" => true], new FileTileCache('osm-wikimedia', $cachedir));
 */
 
 
@@ -56,12 +57,12 @@ $tileservice = new TileService([
 // https://www.terrestris.de/en/openstreetmap-wms/
 // See layers in the xml at https://ows.terrestris.de/osm/service?service=WMS&version=1.1.1&request=GetCapabilities
 /*$tileservice = new WMSTileService([
-    "url" => "https://ows.terrestris.de/osm/service?",
-    "layers" => "OSM-WMS",
-    //"debug" => true,
-    //"usecache" => false,
-    //"headers" => ["" => ""]
-    ], new FileTileCache('terrestris-osm', $cachedir));
+	"url" => "https://ows.terrestris.de/osm/service?",
+	"layers" => "OSM-WMS",
+	//"debug" => true,
+	//"usecache" => false,
+	//"headers" => ["" => ""]
+	], new FileTileCache('terrestris-osm', $cachedir));
 */
 
 $tileservice->setUserAgent("MakeMapApp v1.0");
@@ -95,42 +96,31 @@ $renderer->addLayer(new TileLayer($tileservice));
 
 $gjson = file_get_contents(__DIR__."/fiji.geojson");
 $style = [
-    'strokecolor' => '#3388ff',
-    'fillcolor' => '#3388ff3f',
-    'strokewidth' => 1,
-    'strokelinecap' => 'round',
-    'strokelinejoin' => 'round',
-    //'strokemiterlimit' => 10,
-    'pointradius' => 10,
+	'strokecolor' => '#3388ff',
+	'fillcolor' => '#3388ff3f',
+	'strokewidth' => 1,
+	'strokelinecap' => 'round',
+	'strokelinejoin' => 'round',
+	//'strokemiterlimit' => 10,
 ];
-//$renderer->addGeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]);
-$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]));
+$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' => 10, 'style' => $style]));
+
+$msz = 1;
+$renderer->addLayer(new MarkerLayer($latlon, [
+	/*'markericon' => __DIR__."/../assets/marker-icon.png",
+	'shadowicon' => __DIR__."/../assets/marker-shadow.png",
+	'markersize' => [$msz*25, $msz*41],
+	'shadowsize' => [$msz*41, $msz*41],
+	'markerorigin' => [$msz*12, $msz*40],
+	'shadoworigin' => [$msz*12, $msz*40],*/
+]));
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
 $mapimage = $output['image'];
-$pos = $output['pos']; 
 
 if($mapimage != null && $imgfactory != null)
 {
-    // Marker and shadow
-    $marker_icon = $imgfactory->newImageFromFile(__DIR__."/../assets/marker-icon.png");
-    if($marker_icon != null)
-    {
-        list($mw, $mh) = $imgfactory->getImageSize($marker_icon);
-        $marker_shadow = $imgfactory->newImageFromFile(__DIR__."/../assets/marker-shadow.png");
-        if($marker_shadow != null)
-        {
-            // To position the shadow aligned with the marker, we must offset with the icon sizes
-            $x = intval($pos->x - $mw/2);
-            $y = intval($pos->y - $mh);
-            $imgfactory->drawImageIntoImage($mapimage, $marker_shadow, $x, $y);
-        }
-        $x = intval($pos->x- $mw/2);
-        $y = intval($pos->y - $mh);
-        $imgfactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
-    }
-
-    $imgfactory->saveImageToFile($mapimage, __DIR__."/map.webp");
-    $imgfactory->clearImage($mapimage);
+	$imgfactory->saveImageToFile($mapimage, __DIR__."/map.webp");
+	$imgfactory->clearImage($mapimage);
 }
 

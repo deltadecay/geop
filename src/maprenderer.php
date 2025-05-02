@@ -100,14 +100,11 @@ class MapRenderer
 		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
 		$bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
 		
-		$x = $cp_pixel->x - $topleft_pixel->x;
-		$y = $cp_pixel->y - $topleft_pixel->y;
-
 		// The topleft and bottomright corners in lat lon
 		$topleft = $map->mapToLatLon($topleft_pixel, $zoom);
 		$bottomright = $map->mapToLatLon($bottomright_pixel, $zoom);
 
-		return ['image' => $mapimage, 'pos' => new Point($x, $y), 'topleft' => $topleft, 'bottomright' => $bottomright];
+		return ['image' => $mapimage, 'topleft' => $topleft, 'bottomright' => $bottomright];
 	}
 
 

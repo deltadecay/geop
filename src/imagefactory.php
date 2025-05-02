@@ -35,7 +35,7 @@ interface Canvas
 	public function drawPolygon($polygon);
 	public function drawPolyline($polyline);
 	public function drawCircle($point, $radius);
-	public function drawImage($x, $y, $width, $height, $image);
+	public function drawImage($point, $width, $height, $image);
 }
 
 
@@ -177,50 +177,88 @@ class ImagickCanvas implements Canvas
 	{
 		$this->drawing = new \ImagickDraw();
 		// Apply default style
-		$this->setStyle(null);
+		$style = [
+			'strokeantialias' => true,
+			'strokecolor' => '#3388ff',
+			'fillcolor' => '#3388ff3f',
+			'strokewidth' => 1,
+			'strokelinecap' => 'butt',
+			'strokelinejoin' => 'miter',
+			'strokemiterlimit' => 10,
+		];
+		$this->setStyle($style);
 	}
 
 
 	public function setStyle($style)
 	{
-		$strokecolor = isset($style['strokecolor']) ? $style['strokecolor'] : '#3388ff';
-		$fillcolor = isset($style['fillcolor']) ? $style['fillcolor'] : '#3388ff3f'; 
-		$strokewidth = isset($style['strokewidth']) ? $style['strokewidth'] : 4;
-
-		$strokelinecap = isset($style['strokelinecap']) ? $style['strokelinecap'] : "butt";
-		$linecaps = [
-			"undefined" => \Imagick::LINECAP_UNDEFINED,
-			"butt" => \Imagick::LINECAP_BUTT,
-			"round" => \Imagick::LINECAP_ROUND, 
-			"square" => \Imagick::LINECAP_SQUARE,
-		];
-		$linecap = isset($linecaps[$strokelinecap]) ? $linecaps[$strokelinecap] : \Imagick::LINECAP_BUTT;
-
-		$strokelinejoin = isset($style['strokelinejoin']) ? $style['strokelinejoin'] : "miter";
-		$linejoins = [
-			"undefined" => \Imagick::LINEJOIN_UNDEFINED ,
-			"miter" => \Imagick::LINEJOIN_MITER,
-			"mitre" => \Imagick::LINEJOIN_MITER,
-			"round" => \Imagick::LINEJOIN_ROUND, 
-			"bevel" => \Imagick::LINEJOIN_BEVEL,
-		];
-		$linejoin = isset($linejoins[$strokelinejoin]) ? $linejoins[$strokelinejoin] : \Imagick::LINEJOIN_MITER;
-		$miterlimit = isset($style['strokemiterlimit']) ? $style['strokemiterlimit'] : (isset($style['strokemitrelimit']) ? $style['strokemitrelimit'] : 10);
-
 		$drawing = $this->drawing;
-		if($drawing != null)
+		if($drawing == null)
 		{
-			$drawing->setStrokeAntialias(true);
-			// These two can be set with stroke and fill color
-			//$drawing->setStrokeOpacity(1.0);
-			//$drawing->setFillOpacity(1.0);
-			$drawing->setStrokeColor(new \ImagickPixel($strokecolor));
-			$drawing->setStrokeWidth($strokewidth);
-			$drawing->setStrokeLineCap($linecap);
-			$drawing->setStrokeLineJoin($linejoin);
-			$drawing->setStrokeMiterLimit($miterlimit);
-			$drawing->setFillColor(new \ImagickPixel($fillcolor));
+			return;
 		}
+
+		if(isset($style['strokeantialias']))
+		{
+			$drawing->setStrokeAntialias(!!$style['strokeantialias']);
+		}
+		// These two can be set with stroke and fill color
+		//$drawing->setStrokeOpacity(1.0);
+		//$drawing->setFillOpacity(1.0);
+
+		//$strokecolor = isset($style['strokecolor']) ? $style['strokecolor'] : '#3388ff';
+		if(isset($style['strokecolor']) && is_string($style['strokecolor']))
+		{
+			$drawing->setStrokeColor(new \ImagickPixel($style['strokecolor']));
+		}
+
+		//$strokewidth = isset($style['strokewidth']) ? $style['strokewidth'] : 4;
+		if(isset($style['strokewidth']) && is_numeric($style['strokewidth']))
+		{
+			$drawing->setStrokeWidth($style['strokewidth']);
+		}
+
+		if(isset($style['strokelinecap']))
+		{
+			$strokelinecap = is_string($style['strokelinecap']) ? $style['strokelinecap'] : "butt";
+			$linecaps = [
+				"undefined" => \Imagick::LINECAP_UNDEFINED,
+				"butt" => \Imagick::LINECAP_BUTT,
+				"round" => \Imagick::LINECAP_ROUND, 
+				"square" => \Imagick::LINECAP_SQUARE,
+			];
+			$linecap = isset($linecaps[$strokelinecap]) ? $linecaps[$strokelinecap] : \Imagick::LINECAP_BUTT;
+			$drawing->setStrokeLineCap($linecap);
+		}
+
+		if(isset($style['strokelinejoin']))
+		{
+			$strokelinejoin = is_string($style['strokelinejoin']) ? $style['strokelinejoin'] : "miter";
+			$linejoins = [
+				"undefined" => \Imagick::LINEJOIN_UNDEFINED ,
+				"miter" => \Imagick::LINEJOIN_MITER,
+				"mitre" => \Imagick::LINEJOIN_MITER,
+				"round" => \Imagick::LINEJOIN_ROUND, 
+				"bevel" => \Imagick::LINEJOIN_BEVEL,
+			];
+			$linejoin = isset($linejoins[$strokelinejoin]) ? $linejoins[$strokelinejoin] : \Imagick::LINEJOIN_MITER;
+			$drawing->setStrokeLineJoin($linejoin);
+		}
+
+		// Support both spellings, mitre and miter
+		if(isset($style['strokemitrelimit']) && is_numeric($style['strokemitrelimit']))
+		{
+			$drawing->setStrokeMiterLimit($style['strokemitrelimit']);
+		}
+		if(isset($style['strokemiterlimit']) && is_numeric($style['strokemiterlimit']))
+		{
+			$drawing->setStrokeMiterLimit($style['strokemiterlimit']);
+		}
+
+		if(isset($style['fillcolor']) && is_string($style['fillcolor']))
+		{
+			$drawing->setFillColor(new \ImagickPixel($style['fillcolor']));
+		}	
 	}
 
 
@@ -329,11 +367,13 @@ class ImagickCanvas implements Canvas
 		}
 	}
 
-	public function drawImage($x, $y, $width, $height, $image)
+	public function drawImage($point, $width, $height, $image)
 	{
 		$drawing = $this->drawing;
 		if($drawing != null && $image != null)
 		{
+			$x = $point->x;
+			$y = $point->y;
 			$drawing->composite(\Imagick::COMPOSITE_SRCOVER, $x, $y, $width, $height, $image);
 		}
 	}

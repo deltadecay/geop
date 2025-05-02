@@ -344,3 +344,122 @@ class GeoJsonLayer extends Layer
 	}
 
 }
+
+
+
+class MarkerLayer extends Layer
+{
+	protected $markerLatlon = null;
+	protected $options = [];
+
+	public function __construct($markerLatlon, $options = [])
+	{
+		if(!is_array($options))
+		{
+			$options = [];
+		}
+		$this->options = $options;
+		$this->markerLatlon = $markerLatlon;
+	}
+
+	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
+	{
+		if($imagefactory == null)
+		{
+			return;
+		}
+		$options = $this->options;
+
+		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
+		$cp_pixel = $map->latLonToMap($latlon, $zoom);
+		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+		
+		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
+		$markerPosOnMap = $map->latLonToMap($this->markerLatlon, $zoom);
+		//$pos = $originMatrix->transform($markerPosOnMap);
+		$pos = $markerPosOnMap;
+
+		/**
+		 * @var Canvas $drawing
+		 */
+		$drawing = $imagefactory->newDrawing($mapimage);
+		$drawing->setTransformation($originMatrix);
+
+		if(isset($options['markericon']))
+		{
+			$marker_icon = $imagefactory->newImageFromFile($options['markericon']);
+			if($marker_icon != null)
+			{
+				$markersize = $imagefactory->getImageSize($marker_icon);
+				$custommarkersize = isset($options['markersize']) ? $options['markersize'] : $markersize;
+				if($markersize != $custommarkersize)
+				{
+					$imagefactory->resizeImage($marker_icon, $custommarkersize[0], $custommarkersize[1]);
+				}	
+				if(isset($options['shadowicon']))
+				{
+					$marker_shadow = $imagefactory->newImageFromFile($options['shadowicon']);
+					if($marker_shadow != null)
+					{
+						$shadowsize = $imagefactory->getImageSize($marker_shadow);
+						$customshadowsize = isset($options['shadowsize']) ? $options['shadowsize'] : $shadowsize;
+						if($shadowsize != $customshadowsize)
+						{
+							$imagefactory->resizeImage($marker_shadow, $customshadowsize[0], $customshadowsize[1]);
+						}	
+						$shadoworigin = isset($options['shadoworigin']) ? new Point($options['shadoworigin']) : new Point(0, 0);
+						$x = intval($pos->x - $shadoworigin->x);
+						$y = intval($pos->y - $shadoworigin->y);
+						//$imagefactory->drawImageIntoImage($mapimage, $marker_shadow, $x, $y);
+
+						$drawing->drawImage(new Point($x, $y), $customshadowsize[0], $customshadowsize[1], $marker_shadow);
+					}
+				}
+				$markerorigin = isset($options['markerorigin']) ? new Point($options['markerorigin']) : new Point(0, 0);
+				$x = intval($pos->x - $markerorigin->x);
+				$y = intval($pos->y - $markerorigin->y);
+				//$imagefactory->drawImageIntoImage($mapimage, $marker_icon, $x, $y);
+
+				$drawing->drawImage(new Point($x, $y), $custommarkersize[0], $custommarkersize[1], $marker_icon);
+
+			}
+
+		}
+		else
+		{
+			$style = [
+				'strokecolor' => '#114488',
+				'fillcolor' => '#3388ff',
+				'strokewidth' => 1,
+				'strokelinecap' => 'butt',
+				'strokelinejoin' => 'miter',
+				'strokemiterlimit' => 10,
+			];
+			if(isset($options['style']))
+			{
+				// Only support overriding stroke and fill color
+				$style['strokecolor'] = $options['style']['strokecolor'];
+				$style['fillcolor'] = $options['style']['fillcolor'];
+			}
+			$drawing->setStyle($style);
+
+			$sz = 20;
+			$r = $sz / 2.0;
+			$tipy = $sz;
+			$drawing->setTransformation(Matrix::translation($pos->x, $pos->y - $tipy));
+			$polypoints = [ new Point(0, $tipy) ];
+			for($a=215; $a>=-35; $a -= 5)
+			{
+				$ang = $a * M_PI / 180.0;
+				$polypoints[] = new Point($r * cos($ang), -$r * sin($ang));
+			}
+			$polypoints[] = $polypoints[0];
+			$drawing->drawPolygon([$polypoints]);
+			$style['fillcolor'] = '#ffffff';
+			$drawing->setStyle($style);
+			$drawing->drawCircle(new Point(0, 0), $r/2.0);
+		}
+
+		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+	}
+}
