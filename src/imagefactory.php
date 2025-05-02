@@ -325,7 +325,7 @@ class ImagickCanvas implements Canvas
 		{
 			$x = $point->x;
 			$y = $point->y;
-			$drawing->circle($x, $y, $x + $radius, $y + $radius);
+			$drawing->circle($x, $y, $x + $radius, $y);
 		}
 	}
 
