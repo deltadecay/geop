@@ -427,6 +427,19 @@ class MarkerLayer extends Layer
 		}
 		else
 		{
+			$markerwidth = 25;
+			$markerheight = 41;
+			$markersize = isset($options['markersize']) ? $options['markersize'] : [$markerwidth, $markerheight];
+			if(is_numeric($markersize))
+			{
+				$markerwidth = $markersize;
+				$markerheight = $markersize;
+			}
+			elseif(is_array($markersize) && count($markersize) > 0)
+			{
+				$markerwidth = $markersize[0];
+				$markerheight = count($markersize) > 1 ? $markersize[1] : $markerwidth;
+			}
 			$style = [
 				'strokecolor' => '#114488',
 				'fillcolor' => '#3388ff',
@@ -443,9 +456,9 @@ class MarkerLayer extends Layer
 			}
 			$drawing->setStyle($style);
 
-			$sz = 20;
+			$sz = $markerwidth;
 			$r = $sz / 2.0;
-			$tipy = $sz;
+			$tipy = $markerheight - $r;
 			$drawing->setTransformation(Matrix::translation($pos->x, $pos->y - $tipy));
 			$polypoints = [ new Point(0, $tipy) ];
 			for($a=215; $a>=-35; $a -= 5)

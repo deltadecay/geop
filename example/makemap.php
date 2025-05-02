@@ -107,12 +107,15 @@ $renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' =
 
 $msz = 1;
 $renderer->addLayer(new MarkerLayer($latlon, [
-	/*'markericon' => __DIR__."/../assets/marker-icon.png",
+	// Marker from image when markericon set to path of image 
+	'markericon' => __DIR__."/../assets/marker-icon.png",
 	'shadowicon' => __DIR__."/../assets/marker-shadow.png",
 	'markersize' => [$msz*25, $msz*41],
 	'shadowsize' => [$msz*41, $msz*41],
 	'markerorigin' => [$msz*12, $msz*40],
-	'shadoworigin' => [$msz*12, $msz*40],*/
+	'shadoworigin' => [$msz*12, $msz*40],
+	// If markericon not set, a marker symbol is rendered with size 
+	//'markersize' => [$msz*20, $msz*30],
 ]));
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
