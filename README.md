@@ -122,6 +122,43 @@ $renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' =
 ![Map](assets/map3.webp)
 
 
+## Markers
+
+A marker image can be added as a layer to the map:
+```php
+use \geop\MarkerLayer;
+```
+
+Configure the **markericon** field to point to an image: 
+```php
+$renderer->addLayer(new MarkerLayer($latlon, [
+	'markericon' => "assets/marker-icon.png",
+	'shadowicon' => "assets/marker-shadow.png",
+	'markersize' => [25, 41],
+	'shadowsize' => [41, 41],
+	'markerorigin' => [12, 40],
+	'shadoworigin' => [12, 40],
+]));
+```
+An image to represent the shadow can also be set. The size fields are used to override the size of the images.
+The origin fields configure where in the image the tip of the marker is.
+
+If you don't have a marker image, a marker symbol is drawn onto the map with overridden style:
+```php
+$renderer->addLayer(new MarkerLayer($latlon, [
+	'markersize' => [20, 30],
+	'style' => [
+		'strokecolor' => '#114488',
+		'fillcolor' => '#3388ff',
+		'strokewidth' => 1,
+		'strokelinecap' => 'butt',
+		'strokelinejoin' => 'miter',
+		'strokemiterlimit' => 10,
+	]
+]));
+```
+
+
 ## Rendering backend
 See the interface **[ImageFactory](src/imagefactory.php)** and **[Canvas](src/imagefactory.php)** for what to implement for a custom
 rendering backend. **[ImagickFactory](src/imagefactory.php)** and **[ImagickCanvas](src/imagefactory.php)** implements a rendering backend using the php Imagick extension.
