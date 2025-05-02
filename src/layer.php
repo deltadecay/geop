@@ -450,9 +450,12 @@ class MarkerLayer extends Layer
 			];
 			if(isset($options['style']))
 			{
-				// Only support overriding stroke and fill color
 				$style['strokecolor'] = $options['style']['strokecolor'];
 				$style['fillcolor'] = $options['style']['fillcolor'];
+				$style['strokewidth'] = $options['style']['strokewidth'];
+				$style['strokelinecap'] = $options['style']['strokelinecap'];
+				$style['strokelinejoin'] = $options['style']['strokelinejoin'];
+				$style['strokemiterlimit'] = $options['style']['strokemiterlimit'];
 			}
 			$drawing->setStyle($style);
 
