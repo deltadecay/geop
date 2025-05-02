@@ -301,7 +301,7 @@ class GeoJsonLayer extends Layer
 		$pixel = $map->latLonToMap(new LatLon($point[$LAT], $point[$LON]), $zoom);
 		if ($drawing != null)
 		{
-			$radius = isset($options['style']['pointradius']) ? $options['style']['pointradius'] : 1;
+			$radius = isset($options['pointradius']) ? $options['pointradius'] : 1;
 			$drawing->drawCircle($pixel, $radius);
 		}
 	}

@@ -115,9 +115,8 @@ $style = [
 	'strokelinecap' => 'round',
 	'strokelinejoin' => 'round',
 	//'strokemiterlimit' => 10,
-	'pointradius' => 8,
 ];
-$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'style' => $style]));
+$renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' => 8, 'style' => $style]));
 ```
 
 ![Map](assets/map3.webp)
