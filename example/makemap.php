@@ -109,6 +109,20 @@ $markersLatLons = [
 	new LatLon(41.381073, 2.173224), // Barcelona
 	new LatLon(40.416682, -3.703628), // Madrid
 ];
+
+$minlat = min($markersLatLons[0]->lat, $markersLatLons[1]->lat);
+$maxlat = max($markersLatLons[0]->lat, $markersLatLons[1]->lat);
+$minlon = min($markersLatLons[0]->lon, $markersLatLons[1]->lon);
+$maxlon = max($markersLatLons[0]->lon, $markersLatLons[1]->lon);
+srand(1337);
+for($i=0; $i<10; $i++)
+{
+	// Add some random markers
+	$u = rand(0, getrandmax()) / getrandmax();
+	$v = rand(0, getrandmax()) / getrandmax();
+	$markersLatLons[] = new LatLon($minlat + $u * ($maxlat - $minlat), $minlon + $v * ($maxlon - $minlon));
+}
+
 $msz = 1;
 $renderer->addLayer(new MarkerLayer($markersLatLons, [
 	// Marker from image when markericon set to path of image 
@@ -123,6 +137,9 @@ $renderer->addLayer(new MarkerLayer($markersLatLons, [
 	'innerradius' => $msz*9,
 	'innerfill' => 'rgba(90%, 50%, 20%, 0.5)',
 ]));
+
+list($latlon, $zoom) = $renderer->fitBounds($markersLatLons[0], $markersLatLons[1], $render_width - 100, $render_height - 100);
+
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
 $mapimage = $output['image'];
