@@ -26,12 +26,12 @@ interface ImageFactory
 
 }
 
-interface Drawing
+interface Canvas
 {
-	public function drawStyle($style);
-	public function drawPushState();
-	public function drawPopState();
-	public function drawTransformation($matrix);
+	public function setStyle($style);
+	public function pushState();
+	public function popState();
+	public function setTransformation($matrix);
 	public function drawPolygon($polygon);
 	public function drawPolyline($polyline);
 	public function drawCircle($point, $radius);
@@ -147,19 +147,14 @@ class ImagickFactory implements ImageFactory
 
 	public function newDrawing($image)
 	{
-		/*
-		$drawing = new \ImagickDraw();
-		// Apply default style
-		$this->drawStyle($drawing, null);
-		return $drawing;*/
-		return new ImagickDrawing($image);
+		return new ImagickCanvas($image);
 	}
 
 	public function drawDrawingIntoImage($image, $drawing)
 	{
 		if($image != null && $drawing != null)
 		{
-			if($drawing instanceof ImagickDrawing)
+			if($drawing instanceof ImagickCanvas)
 			{
 				//echo $drawing->getVectorGraphics();
 				$image->drawImage($drawing->getInternalDrawing());
@@ -169,7 +164,7 @@ class ImagickFactory implements ImageFactory
 }
 
 
-class ImagickDrawing implements Drawing
+class ImagickCanvas implements Canvas
 {
 	private $drawing = null;
 
@@ -182,11 +177,11 @@ class ImagickDrawing implements Drawing
 	{
 		$this->drawing = new \ImagickDraw();
 		// Apply default style
-		$this->drawStyle(null);
+		$this->setStyle(null);
 	}
 
 
-	public function drawStyle($style)
+	public function setStyle($style)
 	{
 		$strokecolor = isset($style['strokecolor']) ? $style['strokecolor'] : '#3388ff';
 		$fillcolor = isset($style['fillcolor']) ? $style['fillcolor'] : '#3388ff3f'; 
@@ -229,7 +224,7 @@ class ImagickDrawing implements Drawing
 	}
 
 
-	public function drawPushState()
+	public function pushState()
 	{
 		$drawing = $this->drawing;
 		if($drawing != null)
@@ -237,7 +232,7 @@ class ImagickDrawing implements Drawing
 			$drawing->push();
 		}
 	}
-	public function drawPopState()
+	public function popState()
 	{
 		$drawing = $this->drawing;
 		if($drawing != null)
@@ -245,7 +240,7 @@ class ImagickDrawing implements Drawing
 			$drawing->pop();
 		}
 	}
-	public function drawTransformation($matrix = null)
+	public function setTransformation($matrix = null)
 	{
 		$drawing = $this->drawing;
 		if($drawing != null && $matrix != null)

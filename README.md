@@ -124,8 +124,8 @@ $renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'style' => $sty
 
 
 ## Rendering backend
-See the interface **[ImageFactory](src/imagefactory.php)** for what to implement for a custom
-rendering backend. **[ImagickFactory](src/imagefactory.php)** implements a rendering backend using the php Imagick extension.
+See the interface **[ImageFactory](src/imagefactory.php)** and **[Canvas](src/imagefactory.php)** for what to implement for a custom
+rendering backend. **[ImagickFactory](src/imagefactory.php)** and **[ImagickCanvas](src/imagefactory.php)** implements a rendering backend using the php Imagick extension.
 
 
 ## Demo apps

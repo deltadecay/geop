@@ -202,10 +202,10 @@ class GeoJsonLayer extends Layer
 				
 			// Draw layers
 			$drawing = $imagefactory->newDrawing($mapimage);
-			$drawing->drawTransformation($originMatrix);
+			$drawing->setTransformation($originMatrix);
 			if(isset($options['style']))
 			{
-				$drawing->drawStyle($options['style']);
+				$drawing->setStyle($options['style']);
 			}
 			$this->drawGeoJsonLayer($drawing, $this->geojson, $options, $map, $zoom);
 
