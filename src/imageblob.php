@@ -4,41 +4,41 @@ namespace geop;
 // Try identifying the blob image format from the magic numbers
 function imageblob_identify($blob)
 {
-    $magic3 = substr($blob, 0, 3);
-    if($magic3 == pack("C3", 0xff, 0xd8, 0xff))
-        return 'jpg';
+	$magic3 = substr($blob, 0, 3);
+	if($magic3 == pack("C3", 0xff, 0xd8, 0xff))
+		return 'jpg';
+	
+	$magic4 = substr($blob, 0, 4);
+	if($magic4 == pack("C4", 0x89, 0x50, 0x4e, 0x47) &&
+		substr($blob, 4, 4) == pack("C4", 0x0d, 0x0a, 0x1a, 0x0a))
+		return 'png';
 
-    $magic4 = substr($blob, 0, 4);
-    if($magic4 == pack("C4", 0x89, 0x50, 0x4e, 0x47) &&
-        substr($blob, 4, 4) == pack("C4", 0x0d, 0x0a, 0x1a, 0x0a))
-        return 'png';
-
-    if($magic4  == pack("C4", 0x52, 0x49, 0x46, 0x46) &&
-        substr($blob, 8, 4) == pack("C4", 0x57, 0x45, 0x42, 0x50))
-        return 'webp';
-
-    if($magic4 == pack("C4", 0x47, 0x49, 0x46, 0x38))
-        return 'gif';
-    
-    if($magic4 == pack("C4", 0x4d, 0x4d, 0x00, 0x2a))
-        return 'tif';
-    if($magic4 == pack("C4", 0x4d, 0x4d, 0x00, 0x2b))
-        return 'tif';
-    if($magic4  == pack("C4", 0x49, 0x49, 0x2a, 0x00))
-        return 'tif';
-    if($magic4  == pack("C4", 0x49, 0x49, 0x2b, 0x00))
-        return 'tif';
-
-    if(substr($blob, 0, 2) == pack("C2", 0x42, 0x4d))
-        return 'bmp';
-
-    if(substr($blob, 4, 8) == pack("C8", 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63))
-        return 'heic';
-
-    if(substr($blob, 0, 12) == pack("C12", 0x00, 0x00, 0x00, 0x0c, 0x4a, 0x58, 0x4c, 0x20, 0x0d, 0x0a, 0x87, 0x0a))
-        return 'jxl';
-    if(substr($blob, 0, 2) == pack("C2", 0xff, 0x0a))
-        return 'jxl';
-        
-    return false;
+	if($magic4  == pack("C4", 0x52, 0x49, 0x46, 0x46) &&
+		substr($blob, 8, 4) == pack("C4", 0x57, 0x45, 0x42, 0x50))
+		return 'webp';
+	
+	if($magic4 == pack("C4", 0x47, 0x49, 0x46, 0x38))
+		return 'gif';
+	
+	if($magic4 == pack("C4", 0x4d, 0x4d, 0x00, 0x2a))
+		return 'tif';
+	if($magic4 == pack("C4", 0x4d, 0x4d, 0x00, 0x2b))
+		return 'tif';
+	if($magic4  == pack("C4", 0x49, 0x49, 0x2a, 0x00))
+		return 'tif';
+	if($magic4  == pack("C4", 0x49, 0x49, 0x2b, 0x00))
+		return 'tif';
+	
+	if(substr($blob, 0, 2) == pack("C2", 0x42, 0x4d))
+		return 'bmp';
+	
+	if(substr($blob, 4, 8) == pack("C8", 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63))
+		return 'heic';
+	
+	if(substr($blob, 0, 12) == pack("C12", 0x00, 0x00, 0x00, 0x0c, 0x4a, 0x58, 0x4c, 0x20, 0x0d, 0x0a, 0x87, 0x0a))
+		return 'jxl';
+	if(substr($blob, 0, 2) == pack("C2", 0xff, 0x0a))
+		return 'jxl';
+	
+	return false;
 }
