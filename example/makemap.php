@@ -142,6 +142,7 @@ $renderer->addLayer(new MarkerLayer($markersLatLons, [
 list($latlon, $zoom) = $renderer->fitBounds($markersLatLons[0], $markersLatLons[1], $render_width - 100, $render_height - 100);
 
 $renderer->addLayer(new TextLayer($markersLatLons[1], "Madrid\nSpain", [
+	"angle" => 30,
 	"style" => [
 		'strokecolor' => 'black',
 		'fillcolor' => 'black',

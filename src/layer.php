@@ -599,15 +599,21 @@ class TextLayer extends Layer
 		}
 		$drawing->setStyle($style);
 
-		$pos = $map->latLonToMap($this->textLatlon, $zoom);
-		$drawing->drawText($pos, $this->text);
+		$angle = isset($options['angle']) ? floatval($options['angle']) : 0.0;
 
-		//$metrics = $drawing->queryTextMetrics($this->text);
-		//$textwidth = $metrics['textWidth'];
-		//$textheight = $metrics['textHeight'];
-		//$topy = $pos->y - $metrics['ascender'];
-		//$drawing->setStyle(['fillcolor' => 'none', 'strokewidth' => 1, 'strokecolor' => 'red']);
-		//$drawing->drawRectangle(new Point($pos->x, $topy), new Point($pos->x + $textwidth, $topy + $textheight));
+		$pos = $map->latLonToMap($this->textLatlon, $zoom);
+		$drawing->setTransformation(Matrix::translation($pos->x, $pos->y));
+		$drawing->setTransformation(Matrix::rotate($angle * M_PI / 180.0));
+		$drawing->drawText(new Point(0, 0), $this->text);
+
+		/*
+		$metrics = $drawing->queryTextMetrics($this->text);
+		$textwidth = $metrics['textWidth'];
+		$textheight = $metrics['textHeight'];
+		$topy = - $metrics['ascender'];
+		$drawing->setStyle(['fillcolor' => 'none', 'strokewidth' => 1, 'strokecolor' => 'red']);
+		$drawing->drawRectangle(new Point(0, $topy), new Point( $textwidth, $topy + $textheight));
+		*/
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
 	}
 }
