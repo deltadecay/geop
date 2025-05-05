@@ -36,6 +36,7 @@ interface Canvas
 	public function drawPolyline($polyline);
 	public function drawCircle($point, $radius);
 	public function drawImage($point, $width, $height, $image);
+	public function drawText($point, $text);
 }
 
 
@@ -185,6 +186,16 @@ class ImagickCanvas implements Canvas
 			'strokelinecap' => 'butt',
 			'strokelinejoin' => 'miter',
 			'strokemiterlimit' => 10,
+			
+			'textantialias' => true,
+			'fontsize' => 12,
+			//'font' => '' // not setting default font
+			'textalignment' => 'left',
+			'textdecoration' => 'no',
+			'textkerning' => 0,
+			'textlinespacing' => 0,
+			'textwordspacing' => 0,
+			'textundercolor' => 'transparent',
 		];
 		$this->setStyle($style);
 	}
@@ -259,6 +270,72 @@ class ImagickCanvas implements Canvas
 		{
 			$drawing->setFillColor(new \ImagickPixel($style['fillcolor']));
 		}	
+
+		if(isset($style['textantialias']))
+		{
+			$drawing->setTextAntialias(!!$style['textantialias']);
+		}
+
+		if(isset($style['font']) && is_string($style['font']))
+		{
+			$drawing->setFont($style['font']);
+		}
+
+		if(isset($style['fontsize']) && is_numeric($style['fontsize']))
+		{
+			$drawing->setFontSize($style['fontsize']);
+		}
+
+		if(isset($style['textalignment']))
+		{
+			$textalignment = is_string($style['textalignment']) ? $style['textalignment'] : "left";
+			$alignments = [
+				"undefined" => \Imagick::ALIGN_UNDEFINED,
+				"left" => \Imagick::ALIGN_LEFT,
+				"center" => \Imagick::ALIGN_CENTER, 
+				"right" => \Imagick::ALIGN_RIGHT,
+			];
+			$align = isset($alignments[$textalignment]) ? $alignments[$textalignment] : \Imagick::ALIGN_LEFT;
+			$drawing->setTextAlignment($align);
+		}
+
+		if(isset($style['textdecoration']))
+		{
+			$textdecoration = is_string($style['textdecoration']) ? $style['textdecoration'] : "no";
+			$decorations = [
+				"no" => \Imagick::DECORATION_NO,
+				"none" => \Imagick::DECORATION_NO,
+				"off" => \Imagick::DECORATION_NO,
+				"underline" => \Imagick::DECORATION_UNDERLINE,
+				"overline" => \Imagick::DECORATION_OVERLINE, 
+				"linethrough" => \Imagick::DECORATION_LINETROUGH,
+			];
+			$decoration = isset($decorations[$textdecoration]) ? $decorations[$textdecoration] : \Imagick::DECORATION_NO;
+			$drawing->setTextDecoration($decoration);
+		}
+
+		if(isset($style['textkerning']) && is_numeric($style['textkerning']))
+		{
+			$drawing->setTextKerning(floatval($style['textkerning']));
+		}
+
+		if(isset($style['textlinespacing']) && is_numeric($style['textlinespacing']))
+		{
+			$drawing->setTextInterlineSpacing(floatval($style['textlinespacing']));
+		}
+
+		if(isset($style['textwordspacing']) && is_numeric($style['textwordspacing']))
+		{
+			$drawing->setTextInterwordSpacing(floatval($style['textwordspacing']));
+		}
+
+		if(isset($style['textundercolor']) && is_string($style['textundercolor']))
+		{
+			$drawing->setTextUnderColor(new \ImagickPixel($style['textundercolor']));
+		}	
+		//$drawing->setFontWeight(100); //100-900
+		//$drawing->setFontStretch(\Imagick::STRETCH_NORMAL);
+		//$drawing->setFontStyle(\Imagick::STYLE_NORMAL);
 	}
 
 
@@ -377,6 +454,21 @@ class ImagickCanvas implements Canvas
 			$drawing->composite(\Imagick::COMPOSITE_SRCOVER, $x, $y, $width, $height, $image);
 		}
 	}
+
+	public function drawText($point, $text)
+	{
+		$drawing = $this->drawing;
+		if($drawing != null)
+		{
+			$x = $point->x;
+			$y = $point->y;
+			if($drawing->getFont() !== false)
+			{
+				$drawing->annotation($x, $y, $text);
+			}
+		}
+	}
+
 }
 
 

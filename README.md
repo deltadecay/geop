@@ -159,6 +159,33 @@ $renderer->addLayer(new MarkerLayer($latlon, [
 ```
 
 
+## Text
+
+Use **TextLayer** to add text annotation to the map.
+```php
+use \geop\TextLayer;
+```
+
+```php
+$renderer->addLayer(new TextLayer($latlon, "Hello world", [
+	"style" => [
+		'strokecolor' => 'black',
+		'fillcolor' => 'black',
+		'strokewidth' => 0,
+		'font' => "assets/MesloLGS NF Regular.ttf",
+		'fontsize' => 24,
+		'textantialias' => true,
+		'textalignment' => 'left',
+		'textdecoration' => 'underline',
+		'textkerning' => 0,
+		'textlinespacing' => 0,
+		'textwordspacing' => 0,
+		'textundercolor' => 'transparent',
+	]
+]));
+```
+
+
 ## Rendering backend
 See the interface **[ImageFactory](src/imagefactory.php)** and **[Canvas](src/imagefactory.php)** for what to implement for a custom
 rendering backend. **[ImagickFactory](src/imagefactory.php)** and **[ImagickCanvas](src/imagefactory.php)** implements a rendering backend using the php Imagick extension.

@@ -14,6 +14,7 @@ use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\MarkerLayer;
+use \geop\TextLayer;
 use \geop\ImagickFactory;
 
 
@@ -140,6 +141,22 @@ $renderer->addLayer(new MarkerLayer($markersLatLons, [
 
 list($latlon, $zoom) = $renderer->fitBounds($markersLatLons[0], $markersLatLons[1], $render_width - 100, $render_height - 100);
 
+$renderer->addLayer(new TextLayer($markersLatLons[1], "Madrid\nSpain", [
+	"style" => [
+		'strokecolor' => 'black',
+		'fillcolor' => 'black',
+		'strokewidth' => 0,
+		'font' => __DIR__."/../assets/MesloLGS NF Regular.ttf",
+		'fontsize' => 24,
+		'textantialias' => true,
+		'textalignment' => 'left',
+		'textdecoration' => 'underline',
+		'textkerning' => 0,
+		'textlinespacing' => 0,
+		'textwordspacing' => 0,
+		'textundercolor' => 'transparent',
+	]
+]));
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
 $mapimage = $output['image'];

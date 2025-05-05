@@ -57,7 +57,6 @@ class TileLayer extends Layer
 		$mapimgwidth = $map->getTileSize() * ($bottomright_tile->x - $topleft_tile->x + 1);
 		$mapimgheight = $map->getTileSize() * ($bottomright_tile->y - $topleft_tile->y + 1);
 
-		$tilemapimage = null;
 		$tilemapimage = $imagefactory->newImage($mapimgwidth, $mapimgheight, 'transparent');
 
 		// This is the size of the map in valid tiles
@@ -477,12 +476,16 @@ class MarkerLayer extends Layer
 			];
 			if(isset($options['style']))
 			{
-				$style['strokecolor'] = $options['style']['strokecolor'];
+				foreach($options['style'] as $key=>$value)
+				{
+					$style[$key] = $value;
+				}
+				/*$style['strokecolor'] = $options['style']['strokecolor'];
 				$style['fillcolor'] = $options['style']['fillcolor'];
 				$style['strokewidth'] = $options['style']['strokewidth'];
 				$style['strokelinecap'] = $options['style']['strokelinecap'];
 				$style['strokelinejoin'] = $options['style']['strokelinejoin'];
-				$style['strokemiterlimit'] = $options['style']['strokemiterlimit'];
+				$style['strokemiterlimit'] = $options['style']['strokemiterlimit'];*/
 			}
 			$drawing->setStyle($style);
 
@@ -540,3 +543,66 @@ class MarkerLayer extends Layer
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
 	}
 }
+
+
+
+
+class TextLayer extends Layer
+{
+	protected $textLatlon = null;
+	protected $text = "";
+	protected $options = [];
+
+	public function __construct($textLatlon, $text, $options = [])
+	{
+		if(!is_array($options))
+		{
+			$options = [];
+		}
+		$this->options = $options;
+		$this->textLatlon = $textLatlon;
+		$this->text = "$text";
+	}
+
+	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
+	{
+		if($imagefactory == null)
+		{
+			return;
+		}
+		$options = $this->options;
+
+		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
+		$cp_pixel = $map->latLonToMap($latlon, $zoom);
+		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+		
+		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
+
+
+		/**
+		 * @var Canvas $drawing
+		 */
+		$drawing = $imagefactory->newDrawing($mapimage);
+		$drawing->setTransformation($originMatrix);
+
+		$style = [
+			'strokecolor' => '#000000',
+			'fillcolor' => '#000000',
+			'strokewidth' => 0,
+		];
+		if(isset($options['style']))
+		{
+			foreach($options['style'] as $key=>$value)
+			{
+				$style[$key] = $value;
+			}
+		}
+		$drawing->setStyle($style);
+
+		$pos = $map->latLonToMap($this->textLatlon, $zoom);
+		$drawing->drawText($pos, $this->text);
+		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+	}
+}
+
+
