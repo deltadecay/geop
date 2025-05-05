@@ -174,6 +174,15 @@ class GeoJsonLayer extends Layer
 		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
 		$bottomright_pixel = new Point($cp_pixel->x + $render_width/2, $cp_pixel->y + $render_height/2); 
 
+		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
+
+		/**
+		 * @var Canvas $drawing
+		 */
+		$drawing = $imagefactory->newDrawing($mapimage);
+		$drawing->setTransformation($originMatrix);
+		
+		
 		// The topleft and bottomright corners in lat lon
 		$topleft = $map->mapToLatLon($topleft_pixel, $zoom);
 		$bottomright = $map->mapToLatLon($bottomright_pixel, $zoom);
@@ -189,28 +198,29 @@ class GeoJsonLayer extends Layer
 			$maxwrap = 1;
 		$wrapcopystart = -$maxwrap;
 		$wrapcopyend = $maxwrap; 
-
+		
+		if(isset($options['style']))
+		{
+			$drawing->setStyle($options['style']);
+		}
+		
 		// The map wraps at boundary -180/180 longitude. Some geometries can be represented
 		// at longitude around 180 while others around -180, but these should render
 		// in the same map. Easiest solution is to render multiple copies of the geometries
 		for($wrapcopy=$wrapcopystart; $wrapcopy<=$wrapcopyend; $wrapcopy++)
 		{
+			// Save current state (transformation) so we can restore (by popping) for each of the wrap copies
+			$drawing->pushState();
 			//echo "WrapCopy=$wrapcopy\n";
 			// Translate with the width of map for each wrap copy. 
-			// wrapcopy=0 is the original map
-			$originMatrix = Matrix::translation(-($topleft_pixel->x + $wrapcopy * $map->mapSize($zoom)), -$topleft_pixel->y);
-				
-			// Draw layers
-			$drawing = $imagefactory->newDrawing($mapimage);
-			$drawing->setTransformation($originMatrix);
-			if(isset($options['style']))
-			{
-				$drawing->setStyle($options['style']);
-			}
-			$this->drawGeoJsonLayer($drawing, $this->geojson, $options, $map, $zoom);
+			// wrapcopy=0 is the original map			
+			$drawing->setTransformation(Matrix::translation(-$wrapcopy * $map->mapSize($zoom), 0));
 
-			$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+			$this->drawGeoJsonLayer($drawing, $this->geojson, $options, $map, $zoom);
+			$drawing->popState();
 		}
+		
+		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
 	}
 
 
