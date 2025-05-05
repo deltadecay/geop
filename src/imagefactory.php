@@ -35,8 +35,10 @@ interface Canvas
 	public function drawPolygon($polygon);
 	public function drawPolyline($polyline);
 	public function drawCircle($point, $radius);
+	public function drawRectangle($pointTopLeft, $pointBottomRight);
 	public function drawImage($point, $width, $height, $image);
 	public function drawText($point, $text);
+	public function queryTextMetrics($text);
 }
 
 
@@ -168,6 +170,7 @@ class ImagickFactory implements ImageFactory
 class ImagickCanvas implements Canvas
 {
 	private $drawing = null;
+	private $image = null;
 
 	public function getInternalDrawing()
 	{
@@ -176,6 +179,11 @@ class ImagickCanvas implements Canvas
 
 	public function __construct($image)
 	{
+		if(!($image instanceof \Imagick))
+		{
+			throw new \Exception("image must be of type \\Imagick");
+		}
+		$this->image = $image;
 		$this->drawing = new \ImagickDraw();
 		// Apply default style
 		$style = [
@@ -444,6 +452,19 @@ class ImagickCanvas implements Canvas
 		}
 	}
 
+	public function drawRectangle($pointTopLeft, $pointBottomRight)
+	{
+		$drawing = $this->drawing;
+		if($drawing != null)
+		{
+			$x1 = $pointTopLeft->x;
+			$y1 = $pointTopLeft->y;
+			$x2 = $pointBottomRight->x;
+			$y2 = $pointBottomRight->y;
+			$drawing->rectangle($x1, $y1, $x2, $y2);
+		}
+	}
+
 	public function drawImage($point, $width, $height, $image)
 	{
 		$drawing = $this->drawing;
@@ -469,6 +490,16 @@ class ImagickCanvas implements Canvas
 		}
 	}
 
+	public function queryTextMetrics($text)
+	{
+		$metrics = [];
+		$drawing = $this->drawing;
+		if($this->image != null && $drawing != null)
+		{
+			$metrics = $this->image->queryFontMetrics($drawing, $text);
+		}
+		return $metrics;
+	}
 }
 
 

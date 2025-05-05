@@ -601,6 +601,13 @@ class TextLayer extends Layer
 
 		$pos = $map->latLonToMap($this->textLatlon, $zoom);
 		$drawing->drawText($pos, $this->text);
+
+		//$metrics = $drawing->queryTextMetrics($this->text);
+		//$textwidth = $metrics['textWidth'];
+		//$textheight = $metrics['textHeight'];
+		//$topy = $pos->y - $metrics['ascender'];
+		//$drawing->setStyle(['fillcolor' => 'none', 'strokewidth' => 1, 'strokecolor' => 'red']);
+		//$drawing->drawRectangle(new Point($pos->x, $topy), new Point($pos->x + $textwidth, $topy + $textheight));
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
 	}
 }
