@@ -185,6 +185,39 @@ $renderer->addLayer(new TextLayer($latlon, "Hello world", [
 ]));
 ```
 
+## PolyLines and Polygons
+
+If you want to add geometries but not in the geojson format, you can add polylines and polygons
+as separate layers:
+```php
+use \geop\PolygonLayer;
+use \geop\PolyLineLayer;
+```
+
+```php
+$outerContour = [ $latlon1, $latlon2, ... ];
+$hole1 = [...];
+$hole2 = [...];
+$polygon = [ $outerContour, $hole1, $hole2, ];
+$renderer->addLayer(new PolygonLayer($polygon, [
+	"style" => [
+		'strokecolor' => 'rgba(100%, 0%, 0%, 1.0)',
+		'fillcolor' => 'rgba(50%, 10%, 10%, 0.5)',
+		'strokewidth' => 3,
+	],
+]));
+
+$polyline = [ $latlon1, $latlon2, ... ];
+$renderer->addLayer(new PolyLineLayer($polyline, [
+	"style" => [
+		'strokecolor' => 'green',
+		'strokewidth' => 4,
+		'strokelinecap' => 'round',
+		'strokelinejoin' => 'round',
+	],
+]));
+```
+
 
 ## Rendering backend
 See the interface **[ImageFactory](src/imagefactory.php)** and **[Canvas](src/imagefactory.php)** for what to implement for a custom
