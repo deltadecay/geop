@@ -16,6 +16,7 @@ use \geop\GeoJsonLayer;
 use \geop\MarkerLayer;
 use \geop\TextLayer;
 use \geop\PolygonLayer;
+use \geop\PolyLineLayer;
 use \geop\ImagickFactory;
 
 
@@ -173,6 +174,15 @@ $renderer->addLayer(new PolygonLayer([$citiesPoly], [
 		'strokecolor' => 'rgba(100%, 0%, 0%, 1.0)',
 		'fillcolor' => 'rgba(50%, 10%, 10%, 0.5)',
 		'strokewidth' => 3,
+	],
+]));
+
+$renderer->addLayer(new PolyLineLayer(array_slice($markersLatLons, 3), [
+	"style" => [
+		'strokecolor' => 'green',
+		'strokewidth' => 4,
+		'strokelinecap' => 'round',
+		'strokelinejoin' => 'round',
 	],
 ]));
 

@@ -649,7 +649,6 @@ class PolygonLayer extends Layer
 		
 		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
 
-
 		/**
 		 * @var Canvas $drawing
 		 */
@@ -673,6 +672,60 @@ class PolygonLayer extends Layer
 			$polygon[] = $contourPoints;
 		}
 		$drawing->drawPolygon($polygon);
+		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+	}
+}
+
+
+
+
+class PolyLineLayer extends Layer
+{
+	protected $polyline = [];
+	protected $options = [];
+
+	public function __construct($polyline, $options = [])
+	{
+		if(!is_array($options))
+		{
+			$options = [];
+		}
+		$this->options = $options;
+		$this->polyline = $polyline;
+	}
+
+	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
+	{
+		if($imagefactory == null)
+		{
+			return;
+		}
+		$options = $this->options;
+
+		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
+		$cp_pixel = $map->latLonToMap($latlon, $zoom);
+		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+		
+		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
+
+		/**
+		 * @var Canvas $drawing
+		 */
+		$drawing = $imagefactory->newDrawing($mapimage);
+		$drawing->setTransformation($originMatrix);
+
+		if(isset($options['style']))
+		{
+			$drawing->setStyle($options['style']);
+		}
+
+		$polyline = [];
+		foreach($this->polyline as $point)
+		{
+			$pos = $map->latLonToMap($point, $zoom);
+			$polyline[] = $pos;
+		}
+		$drawing->drawPolyline($polyline);
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
 	}
 }
