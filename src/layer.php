@@ -619,3 +619,62 @@ class TextLayer extends Layer
 }
 
 
+
+class PolygonLayer extends Layer
+{
+	protected $polygon = [];
+	protected $options = [];
+
+	public function __construct($polygon, $options = [])
+	{
+		if(!is_array($options))
+		{
+			$options = [];
+		}
+		$this->options = $options;
+		$this->polygon = $polygon;
+	}
+
+	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
+	{
+		if($imagefactory == null)
+		{
+			return;
+		}
+		$options = $this->options;
+
+		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
+		$cp_pixel = $map->latLonToMap($latlon, $zoom);
+		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
+		
+		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
+
+
+		/**
+		 * @var Canvas $drawing
+		 */
+		$drawing = $imagefactory->newDrawing($mapimage);
+		$drawing->setTransformation($originMatrix);
+
+		if(isset($options['style']))
+		{
+			$drawing->setStyle($options['style']);
+		}
+
+		$polygon = [];
+		foreach($this->polygon as $contour)
+		{
+			$contourPoints = [];
+			foreach($contour as $point)
+			{
+				$pos = $map->latLonToMap($point, $zoom);
+				$contourPoints[] = $pos;
+			}
+			$polygon[] = $contourPoints;
+		}
+		$drawing->drawPolygon($polygon);
+		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+	}
+}
+
+

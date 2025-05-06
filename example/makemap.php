@@ -15,6 +15,7 @@ use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\MarkerLayer;
 use \geop\TextLayer;
+use \geop\PolygonLayer;
 use \geop\ImagickFactory;
 
 
@@ -109,6 +110,7 @@ $renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' =
 $markersLatLons = [
 	new LatLon(41.381073, 2.173224), // Barcelona
 	new LatLon(40.416682, -3.703628), // Madrid
+	new LatLon(39.469728, -0.376063), // Valencia
 ];
 
 $minlat = min($markersLatLons[0]->lat, $markersLatLons[1]->lat);
@@ -157,6 +159,21 @@ $renderer->addLayer(new TextLayer($markersLatLons[1], "Madrid\nSpain", [
 		'textwordspacing' => 0,
 		'textundercolor' => 'transparent',
 	]
+]));
+
+// A triangle of three cities
+$citiesPoly = [
+	new LatLon(41.381073, 2.173224), // Barcelona
+	new LatLon(40.416682, -3.703628), // Madrid
+	new LatLon(39.469728, -0.376063), // Valencia
+	new LatLon(41.381073, 2.173224), // Barcelona
+];
+$renderer->addLayer(new PolygonLayer([$citiesPoly], [
+	"style" => [
+		'strokecolor' => 'rgba(100%, 0%, 0%, 1.0)',
+		'fillcolor' => 'rgba(50%, 10%, 10%, 0.5)',
+		'strokewidth' => 3,
+	],
 ]));
 
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
