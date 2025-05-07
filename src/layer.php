@@ -210,7 +210,6 @@ class GeoJsonLayer extends Layer
 		{
 			// Save current state (transformation) so we can restore (by popping) for each of the wrap copies
 			$drawing->pushState();
-			//echo "WrapCopy=$wrapcopy\n";
 			// Translate with the width of map for each wrap copy. 
 			// wrapcopy=0 is the original map			
 			$drawing->setTransformation(Matrix::translation(-$wrapcopy * $map->mapSize($zoom), 0));
@@ -392,7 +391,6 @@ class MarkerLayer extends Layer
 		
 		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
 
-
 		/**
 		 * @var Canvas $drawing
 		 */
@@ -480,12 +478,6 @@ class MarkerLayer extends Layer
 				{
 					$style[$key] = $value;
 				}
-				/*$style['strokecolor'] = $options['style']['strokecolor'];
-				$style['fillcolor'] = $options['style']['fillcolor'];
-				$style['strokewidth'] = $options['style']['strokewidth'];
-				$style['strokelinecap'] = $options['style']['strokelinecap'];
-				$style['strokelinejoin'] = $options['style']['strokelinejoin'];
-				$style['strokemiterlimit'] = $options['style']['strokemiterlimit'];*/
 			}
 			$drawing->setStyle($style);
 
@@ -577,7 +569,6 @@ class TextLayer extends Layer
 		$topleft_pixel = new Point($cp_pixel->x - $render_width/2, $cp_pixel->y - $render_height/2); 
 		
 		$originMatrix = Matrix::translation(-$topleft_pixel->x, -$topleft_pixel->y);
-
 
 		/**
 		 * @var Canvas $drawing
