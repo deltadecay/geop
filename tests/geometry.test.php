@@ -78,4 +78,32 @@ test("Matrix transformations", function(){
 });
 
 
+test("Matrix inverse", function(){
+	$p_org = new Point(10, 0);
+
+	// First rotate 45 ccw, then translate -10,-3
+	$m = Matrix::mul(Matrix::translation(-10, -3), Matrix::rotate(M_PI/4));
+	$tp = $m->transform($p_org);
+
+	// Inverse the transformation
+	$m_inv = Matrix::inverse($m);
+	// and transform the already transformed point
+	$p = $m_inv->transform($tp);
+	
+	// now p should be equal to the original starting point
+	expect($p->x)->toBeCloseTo($p_org->x, 5);
+	expect($p->y)->toBeCloseTo($p_org->y, 5);
+
+	// Reverse the order and negate of the above trasnformations
+	$m2 = Matrix::mul(Matrix::rotate(-M_PI/4), Matrix::translation(10, 3));
+	// This should be equal to the inverse
+	expect($m_inv->a)->toBeCloseTo($m2->a, 5);
+	expect($m_inv->b)->toBeCloseTo($m2->b, 5);
+	expect($m_inv->c)->toBeCloseTo($m2->c, 5);
+	expect($m_inv->d)->toBeCloseTo($m2->d, 5);
+	expect($m_inv->e)->toBeCloseTo($m2->e, 5);
+	expect($m_inv->f)->toBeCloseTo($m2->f, 5);
+});
+
+
 

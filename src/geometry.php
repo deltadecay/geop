@@ -130,6 +130,31 @@ class Matrix
 		return new Point($x, $y);
 	}
 
+	public function determinant()
+	{
+		$det = $this->a * $this->e - $this->b * $this->d;
+		return $det;
+	}
+
+	public static function inverse(Matrix $m)
+	{
+		$det = $m->determinant();
+		if($det == 0.0)
+		{
+			return false;
+		}
+
+		$oodet = 1.0 / $det;
+		$a = $m->e * $oodet;
+		$b = -$m->b * $oodet;
+		$c = ($m->b * $m->f - $m->c * $m->e) * $oodet;
+		$d = -$m->d * $oodet;
+		$e = $m->a * $oodet;
+		$f = ($m->c * $m->d - $m->a * $m->f) * $oodet;
+	
+		return new Matrix($a, $b, $c, $d, $e, $f);
+	}
+
 	public static function mul(Matrix $m1, Matrix $m2)
 	{
 		$a = $m1->a*$m2->a + $m1->b*$m2->d;
