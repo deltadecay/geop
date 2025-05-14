@@ -145,6 +145,7 @@ class Matrix
 		}
 
 		$oodet = 1.0 / $det;
+		/*
 		$a = $m->e * $oodet;
 		$b = -$m->b * $oodet;
 		$c = ($m->b * $m->f - $m->c * $m->e) * $oodet;
@@ -153,6 +154,15 @@ class Matrix
 		$f = ($m->c * $m->d - $m->a * $m->f) * $oodet;
 	
 		return new Matrix($a, $b, $c, $d, $e, $f);
+		*/
+
+		$a = $m->e * $oodet;
+		$b = $m->b * $oodet;
+		$c = $b * $m->f - $m->c * $a;
+		$d = $m->d * $oodet;
+		$e = $m->a * $oodet;
+		$f = $m->c * $d - $e * $m->f;
+		return new Matrix($a, -$b, $c, -$d, $e, $f);
 	}
 
 	public static function mul(Matrix $m1, Matrix $m2)
