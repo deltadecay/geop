@@ -66,15 +66,15 @@ test("Matrix transformations", function(){
 	// First rotate 90 ccw, then translate -10,-10
 	$m = Matrix::mul(Matrix::translation(-10, -10), Matrix::rotate(M_PI/2));
 	$p = $m->transform(new Point(10, 0));
-	expect($p->x)->toBeCloseTo(-10, 5);
-	expect($p->y)->toBeCloseTo(0, 5);
+	expect($p->x)->toBeCloseTo(-10, 8);
+	expect($p->y)->toBeCloseTo(0, 8);
 
 	// First rotate 45 ccw, then scale 2, then rotate 45 cw 
 	$m = Matrix::mul(Matrix::scale(2,2), Matrix::rotate(M_PI/4));
 	$m = Matrix::mul(Matrix::rotate(-M_PI/4), $m);
 	$p = $m->transform(new Point(5, 0));
-	expect($p->x)->toBeCloseTo(10, 5);
-	expect($p->y)->toBeCloseTo(0, 5);
+	expect($p->x)->toBeCloseTo(10, 8);
+	expect($p->y)->toBeCloseTo(0, 8);
 });
 
 
@@ -91,18 +91,18 @@ test("Matrix inverse", function(){
 	$p = $m_inv->transform($tp);
 	
 	// now p should be equal to the original starting point
-	expect($p->x)->toBeCloseTo($p_org->x, 5);
-	expect($p->y)->toBeCloseTo($p_org->y, 5);
+	expect($p->x)->toBeCloseTo($p_org->x, 8);
+	expect($p->y)->toBeCloseTo($p_org->y, 8);
 
 	// Reverse the order and negate of the above trasnformations
 	$m2 = Matrix::mul(Matrix::rotate(-M_PI/4), Matrix::translation(10, 3));
 	// This should be equal to the inverse
-	expect($m_inv->a)->toBeCloseTo($m2->a, 5);
-	expect($m_inv->b)->toBeCloseTo($m2->b, 5);
-	expect($m_inv->c)->toBeCloseTo($m2->c, 5);
-	expect($m_inv->d)->toBeCloseTo($m2->d, 5);
-	expect($m_inv->e)->toBeCloseTo($m2->e, 5);
-	expect($m_inv->f)->toBeCloseTo($m2->f, 5);
+	expect($m_inv->a)->toBeCloseTo($m2->a, 8);
+	expect($m_inv->b)->toBeCloseTo($m2->b, 8);
+	expect($m_inv->c)->toBeCloseTo($m2->c, 8);
+	expect($m_inv->d)->toBeCloseTo($m2->d, 8);
+	expect($m_inv->e)->toBeCloseTo($m2->e, 8);
+	expect($m_inv->f)->toBeCloseTo($m2->f, 8);
 });
 
 
