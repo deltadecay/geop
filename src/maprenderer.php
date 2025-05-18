@@ -70,6 +70,10 @@ class MapRenderer
 		$this->layers[] = $layer;
 	}
 
+	public function clearLayers()
+	{
+		$this->layers = [];
+	}
 
 	public function renderMap(LatLon $latlon, $zoom, $render_width=640, $render_height=480, $bgcolor = '#7f7f7f')
 	{
