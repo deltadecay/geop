@@ -15,7 +15,7 @@ class MapRenderer
 
 	protected $layers = [];
 
-	public function __construct(Map $map, ImageFactory $imagefactory)
+	public function __construct(Map $map, $imagefactory)
 	{
 		$this->map = $map;
 		$this->imagefactory = $imagefactory;
