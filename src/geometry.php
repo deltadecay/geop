@@ -38,6 +38,7 @@ class LatLon
 	public $lat;
 	public $lon;
 
+	// Create a LatLon from decimal format.
 	public function __construct(...$p)
 	{
 		if(count($p) > 0)
@@ -55,6 +56,14 @@ class LatLon
 				$this->lon = floatval($p[1]);
 			}
 		}
+	}
+
+	// Create a LatLon from Degrees Minutes Seconds format
+	public static function fromDMS($latDeg, $latMin, $latSec, $lonDeg, $lonMin, $lonSec)
+	{
+		$lat = $latDeg + ($latMin + $latSec/60.0) / 60.0;
+		$lon = $lonDeg + ($lonMin + $lonSec/60.0) / 60.0;
+		return new LatLon($lat, $lon);
 	}
 
 	public static function clamplatitude($lat)

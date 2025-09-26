@@ -38,6 +38,13 @@ test("LatLon", function(){
 });
 
 
+test("LatLon from Degrees Minutes Seconds", function(){
+	$latlon = LatLon::fromDMS(46, 35, 48, 6, 11, 35);
+	expect($latlon->lat)->toBeCloseTo(46.59666666666666666667, 8);
+	expect($latlon->lon)->toBeCloseTo(6.19305555555555555556, 8);
+});
+
+
 test("Matrix", function(){
 	$m = new Matrix();
 	expect($m->a)->toBe(1);
