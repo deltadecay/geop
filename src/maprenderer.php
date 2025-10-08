@@ -93,10 +93,12 @@ class MapRenderer
 			$mapimage = $this->imagefactory->newImage($render_width, $render_height, $bgcolor);
 		}
 
+		$layersOk = false;
 		// Render the layers
 		foreach ($this->layers as $layer)
 		{
-			$layer->render($this->imagefactory, $mapimage, $map, $latlon, $zoom);
+			$layerOk = $layer->render($this->imagefactory, $mapimage, $map, $latlon, $zoom);
+			$layersOk = $layersOk || $layerOk;			
 		}
 
 		// Compute with real fractional zoom
@@ -108,7 +110,7 @@ class MapRenderer
 		$topleft = $map->mapToLatLon($topleft_pixel, $zoom);
 		$bottomright = $map->mapToLatLon($bottomright_pixel, $zoom);
 
-		return ['image' => $mapimage, 'topleft' => $topleft, 'bottomright' => $bottomright];
+		return ['image' => $mapimage, 'topleft' => $topleft, 'bottomright' => $bottomright, "layersok" => $layersOk];
 	}
 
 

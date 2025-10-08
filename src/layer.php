@@ -10,9 +10,20 @@ require_once(__DIR__."/geometry.php");
 abstract class Layer
 {
 
+	/**
+	 * Render the layer
+	 * @param \geop\ImageFactory $imagefactory The image factory responsible of rendering the image
+	 * @param mixed $mapimage The image resource into which the rendering is done
+	 * @param \geop\Map $map The instance of the map
+	 * @param \geop\LatLon $latlon The location of the center of the map
+	 * @param mixed $zoom The zoom of the map
+	 * @throws \Exception If not implemented
+	 * @return bool true if render succesful, false otherwise.
+	 */
 	public function render(ImageFactory $imagefactory, $mapimage, Map $map, LatLon $latlon, $zoom)
 	{
 		throw new \Exception("render() not implemented");
+		//return false;
 	}
 }
 
@@ -39,7 +50,7 @@ class TileLayer extends Layer
 	{
 		if ($imagefactory == null)
 		{
-			return;
+			return false;
 		}
 		list($render_width, $render_height) = $imagefactory->getImageSize($mapimage);
 
@@ -67,6 +78,7 @@ class TileLayer extends Layer
 		// a valid tile, in the range [0, ntiles-1] (see below)
 		$tmulx = intval(abs($topleft_tile->x)) * $ntiles;
 
+		$failedFetches = 0;
 		// Fetch and compose tiles into the map image row by row
 		$offsety = 0;
 		for($ty=$topleft_tile->y; $ty<=$bottomright_tile->y; $ty++)
@@ -85,6 +97,10 @@ class TileLayer extends Layer
 						$tileimage = $imagefactory->newImageFromBlob($imgblob);
 						$imagefactory->drawImageIntoImage($tilemapimage, $tileimage, $offsetx, $offsety);
 						$imagefactory->clearImage($tileimage);
+					}
+					else
+					{
+						$failedFetches++; 
 					}
 				}
 				$offsetx += $map->getTileSize();
@@ -108,6 +124,8 @@ class TileLayer extends Layer
 		//$imagefactory->cropImage($tilemapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
 		//$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, 0, 0);
 		$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, -$crop_offsetx, -$crop_offsety);
+
+		return $failedFetches == 0;
 	}
 }
 
@@ -162,7 +180,7 @@ class GeoJsonLayer extends Layer
 	{
 		if($imagefactory == null)
 		{
-			return;
+			return false;
 		}
 		$options = $this->options;
 
@@ -219,6 +237,8 @@ class GeoJsonLayer extends Layer
 		}
 		
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+
+		return true;
 	}
 
 
@@ -381,7 +401,7 @@ class MarkerLayer extends Layer
 	{
 		if($imagefactory == null)
 		{
-			return;
+			return false;
 		}
 		$options = $this->options;
 
@@ -533,6 +553,8 @@ class MarkerLayer extends Layer
 		}
 
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+
+		return true;
 	}
 }
 
@@ -560,7 +582,7 @@ class TextLayer extends Layer
 	{
 		if($imagefactory == null)
 		{
-			return;
+			return false;
 		}
 		$options = $this->options;
 
@@ -606,6 +628,8 @@ class TextLayer extends Layer
 		$drawing->drawRectangle(new Point(0, $topy), new Point( $textwidth, $topy + $textheight));
 		*/
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+
+		return true;
 	}
 }
 
@@ -630,7 +654,7 @@ class PolygonLayer extends Layer
 	{
 		if($imagefactory == null)
 		{
-			return;
+			return false;
 		}
 		$options = $this->options;
 
@@ -664,6 +688,8 @@ class PolygonLayer extends Layer
 		}
 		$drawing->drawPolygon($polygon);
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+
+		return true;
 	}
 }
 
@@ -689,7 +715,7 @@ class PolyLineLayer extends Layer
 	{
 		if($imagefactory == null)
 		{
-			return;
+			return false;
 		}
 		$options = $this->options;
 
@@ -718,6 +744,7 @@ class PolyLineLayer extends Layer
 		}
 		$drawing->drawPolyline($polyline);
 		$imagefactory->drawDrawingIntoImage($mapimage, $drawing);
+		return true;
 	}
 }
 
