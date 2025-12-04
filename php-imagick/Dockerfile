@@ -1,7 +1,7 @@
-FROM php:8.4.3-cli-alpine3.20
+FROM php:8.4.15-cli-alpine3.22
 
 # Some imagick formats have been separated into own packages:
-# https://pkgs.alpinelinux.org/packages?name=imagemagick-*&branch=v3.20&repo=&arch=aarch64&origin=&flagged=&maintainer=
+# https://pkgs.alpinelinux.org/packages?name=imagemagick-*&branch=v3.22&repo=&arch=aarch64&origin=&flagged=&maintainer=
 
 # Install dependencies and development tools
 RUN apk add --update --no-cache \
@@ -28,6 +28,7 @@ RUN git clone https://github.com/Imagick/imagick.git --depth 1 /tmp/imagick && \
     make && \
     make install
 
+RUN docker-php-ext-install calendar && docker-php-ext-configure calendar
 RUN docker-php-ext-enable imagick
 ## No need to add pdo_sqlite, it is already installed
 #RUN docker-php-ext-install pdo pdo_sqlite
