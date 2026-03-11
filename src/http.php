@@ -2,7 +2,8 @@
 namespace geop;
 
 
-if (!defined('CURL_HTTP_VERSION_2_0')) {
+if (!defined('CURL_HTTP_VERSION_2_0')) 
+{
 	define('CURL_HTTP_VERSION_2_0', 3);
 }
 
@@ -16,7 +17,7 @@ if (!defined('CURL_HTTP_VERSION_2_0')) {
 //
 class HttpClient 
 {
-	public function request($method, $url, $headers = "", $postdata = "") 
+	public function request($method, $url, $headers = "", $data = "") 
 	{
 		if (is_string($headers) && strlen($headers) > 0) 
 		{
@@ -26,16 +27,18 @@ class HttpClient
 		{
 			$headers = [];
 		}	
-		if (function_exists('curl_version')) {
+		if (function_exists('curl_version')) 
+		{
+			$hashttp2 = curl_version()['features'] & CURL_HTTP_VERSION_2_0;
 			$opts = [
 				CURLOPT_URL => $url,
 				CURLOPT_RETURNTRANSFER => true,
 				CURLOPT_ENCODING => "",
 				CURLOPT_MAXREDIRS => 10,
 				CURLOPT_TIMEOUT => 30,
-				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2_0,
+				CURLOPT_HTTP_VERSION => $hashttp2 ? CURL_HTTP_VERSION_2_0 : CURL_HTTP_VERSION_1_1,
 				CURLOPT_CUSTOMREQUEST => $method,
-				CURLOPT_POSTFIELDS => $postdata,
+				CURLOPT_POSTFIELDS => $data,
 				CURLOPT_HTTPHEADER => $headers,
 			];
 			// Get header rows
@@ -56,14 +59,18 @@ class HttpClient
 			$response = curl_exec($curl);
 			$httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 			$err = curl_error($curl);
-			curl_close($curl);
+			if (PHP_VERSION_ID < 80000) 
+			{
+				// In 8.0 this is no-op and deprecated in 8.5
+				curl_close($curl);
+			}
 		} 
 		else 
 		{
 			$opts = ['http' => [
 				"method"  => $method,
 				"header"  => implode("\r\n", $headers),
-				"content" => $postdata,
+				"content" => $data,
 				"protocol_version" => "1.1",
 				//"ignore_errors" => true,
 				]
@@ -75,19 +82,32 @@ class HttpClient
 			{
 				$err = error_get_last()['message'];
 			}
-			// Get http status code
-			preg_match('/([0-9])\d+/', $http_response_header[0], $matches);
-			$httpcode = intval($matches[0]);
+			// In php 8.5 the magic variable http_response_header is deprecated, 
+			// from 8.4 the function http_get_last_response_headers is equivalent 
+			if (function_exists('http_get_last_response_headers')) 
+			{
+				$http_response_header = http_get_last_response_headers();
+			}
+			$http_last_response_header = $http_response_header;
+			
+			$httpcode = 0;
+			if (count($http_last_response_header) > 0)
+			{
+				// Get http status code
+				if (preg_match('/([0-9])\d+/', $http_last_response_header[0], $matches) > 0)
+				{
+					$httpcode = intval($matches[0]);
+				}
+			}
 			// Get header rows
 			$respheaders = [];
-			foreach ($http_response_header as $hrow) 
+			foreach ($http_last_response_header as $hrow) 
 			{
 				$hparts = explode(':', $hrow, 2);
-				if (count($hparts) < 2) 
+				if (count($hparts) > 1) 
 				{ 
-					continue;
+					$respheaders[strtolower(trim($hparts[0]))][] = trim($hparts[1]);
 				}
-				$respheaders[strtolower(trim($hparts[0]))][] = trim($hparts[1]);
 			}
 			if (isset($respheaders['content-encoding'])) 
 			{
@@ -110,23 +130,23 @@ class HttpClient
 			}
 
 		}
-		return array("body" => $response, "httpcode" => $httpcode, "headers" => $respheaders, "error" => $err);
+		return ["body" => $response, "httpcode" => $httpcode, "headers" => $respheaders, "error" => $err];
 	}
 
 }
 
 
-function http_get($url, $headers = "")
+function http_get($url, $headers = "", $data = "")
 {
 	$httpClient = new HttpClient();
-	$response = $httpClient->request("GET", $url, $headers);
+	$response = $httpClient->request("GET", $url, $headers, $data);
 	return $response;
 }
 
-function http_post($url, $headers = "", $postdata = "")
+function http_post($url, $headers = "", $data = "")
 {
 	$httpClient = new HttpClient();
-	$response = $httpClient->request("POST", $url, $headers, $postdata);
+	$response = $httpClient->request("POST", $url, $headers, $data);
 	return $response;
 }
 
