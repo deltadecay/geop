@@ -24,12 +24,20 @@ function colorhex2rgba($color)
 	if($color == "transparent") return [0,0,0,0];
 	if($color == "black") return [0,0,0,255];
 	if($color == "white") return [255,255,255,255];
+	if($color == "silver") return [192,192,192,255];
+	if($color == "gray") return [128,128,128,255];
 	if($color == "red") return [255,0,0,255];
-	if($color == "green") return [0,255,0,255];
+	if($color == "maroon") return [128,0,0,255];
+	if($color == "green") return [0,128,0,255];
+	if($color == "lime") return [0,255,0,255];
 	if($color == "blue") return [0,0,255,255];
+	if($color == "navy") return [0,0,128,255];
 	if($color == "yellow") return [255,255,0,255];
-	if($color == "cyan") return [0,255,255,255];
-	if($color == "magenta") return [255,0,255,255];
+	if($color == "olive") return [128,128,0,255];
+	if($color == "aqua") return [0,255,255,255];
+	if($color == "teal") return [0,128,128,255];
+	if($color == "fuchsia") return [255,0,255,255];
+	if($color == "purple") return [128,0,128,255];
 	
 	$defaultColor = [0,0,0,255];
 

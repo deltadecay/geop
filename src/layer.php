@@ -111,7 +111,7 @@ class TileLayer extends Layer
 		$scale = pow(2, $zoom - $izoom);
 		if($scale > 1.0)
 		{
-			$imagefactory->resizeImage($tilemapimage, intval($mapimgwidth*$scale), intval($mapimgheight*$scale));
+			$tilemapimage = $imagefactory->resizeImage($tilemapimage, intval($mapimgwidth*$scale), intval($mapimgheight*$scale));
 		}
 
 		$midp_offsetx = ($render_width*$scale - $render_width) / 2;
@@ -121,7 +121,7 @@ class TileLayer extends Layer
 		$crop_offsety = intval(($topleft_pixel->y - $map->getTileSize() * $topleft_tile->y) * $scale + $midp_offsety);
 
 
-		//$imagefactory->cropImage($tilemapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
+		//$tilemapimage = $imagefactory->cropImage($tilemapimage, $render_width, $render_height, $crop_offsetx, $crop_offsety);
 		//$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, 0, 0);
 		$imagefactory->drawImageIntoImage($mapimage, $tilemapimage, -$crop_offsetx, -$crop_offsety);
 
@@ -435,7 +435,7 @@ class MarkerLayer extends Layer
 			// No need to resize since drawImage draws the size specified
 			/*if($markersize != $custommarkersize)
 			{
-				$imagefactory->resizeImage($marker_icon, $custommarkersize[0], $custommarkersize[1]);
+				$marker_icon = $imagefactory->resizeImage($marker_icon, $custommarkersize[0], $custommarkersize[1]);
 			}*/	
 			$customshadowsize = [0, 0];
 			if($marker_shadow != null)
@@ -445,7 +445,7 @@ class MarkerLayer extends Layer
 				// No need to resize since drawImage draws the size specified
 				/*if($shadowsize != $customshadowsize)
 				{
-					$imagefactory->resizeImage($marker_shadow, $customshadowsize[0], $customshadowsize[1]);
+					$marker_shadow = $imagefactory->resizeImage($marker_shadow, $customshadowsize[0], $customshadowsize[1]);
 				}*/	
 			}
 
@@ -515,14 +515,14 @@ class MarkerLayer extends Layer
 			$polypoints = [ new Point(0, 0) ];
 			for($a=215; $a>=-35; $a -= 5)
 			{
-				$ang = $a * M_PI / 180.0;
+				$ang = deg2rad($a);
 				$polypoints[] = new Point($r * cos($ang), $tipy + $r * sin($ang));
 			}
 			$polypoints[] = $polypoints[0];
 			$hole = [];
 			for($a=0; $a<=360; $a += 5)
 			{
-				$ang = $a * M_PI / 180.0;
+				$ang = deg2rad($a); 
 				$hole[] = new Point($innerRadius * cos($ang), $tipy + $innerRadius * sin($ang));
 			}
 			$hole[] = $hole[0];
@@ -616,7 +616,7 @@ class TextLayer extends Layer
 
 		$pos = $map->latLonToMap($this->textLatlon, $zoom);
 		$drawing->setTransformation(Matrix::translation($pos->x, $pos->y));
-		$drawing->setTransformation(Matrix::rotate($angle * M_PI / 180.0));
+		$drawing->setTransformation(Matrix::rotate(deg2rad($angle)));
 		$drawing->drawText(new Point(0, 0), $this->text);
 
 		/*

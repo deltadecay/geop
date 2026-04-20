@@ -18,6 +18,7 @@ use \geop\TextLayer;
 use \geop\PolygonLayer;
 use \geop\PolyLineLayer;
 use \geop\ImagickFactory;
+use \geop\GDImageFactory;
 
 
 $latlon = new LatLon(41.381073, 2.173224);
@@ -68,13 +69,17 @@ $tileservice = new TileService([
 	], new FileTileCache('terrestris-osm', $cachedir));
 */
 
-$tileservice->setUserAgent("MakeMapApp v1.0");
-//$tileservice->setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KH TML, like Gecko) Version/18.3.1 Safari/605.1.15");
+//$tileservice->setUserAgent("MakeMapApp v1.0");
+$tileservice->setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KH TML, like Gecko) Version/18.3.1 Safari/605.1.15");
 
 $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
+if($imgfactory == null)
+{
+	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
+}
 $renderer = new MapRenderer($map, $imgfactory);
 $renderer->addLayer(new TileLayer($tileservice));
 
@@ -140,6 +145,10 @@ $renderer->addLayer(new MarkerLayer($markersLatLons, [
 	//'markersize' => [$msz*20, $msz*30],
 	'innerradius' => $msz*9,
 	'innerfill' => 'rgba(90%, 50%, 20%, 0.5)',
+	//'innerfill' => 'transparent',
+	'style' => [
+		'strokewidth' => 2,
+	],
 ]));
 
 list($latlon, $zoom) = $renderer->fitBounds($markersLatLons[0], $markersLatLons[1], $render_width - 100, $render_height - 100);
@@ -172,8 +181,8 @@ $citiesPoly = [
 $renderer->addLayer(new PolygonLayer([$citiesPoly], [
 	"style" => [
 		'strokecolor' => 'rgba(100%, 0%, 0%, 1.0)',
-		'fillcolor' => 'rgba(50%, 10%, 10%, 0.5)',
-		'strokewidth' => 3,
+		'fillcolor' => 'rgba(50%, 10%, 10%, 0.3)',
+		'strokewidth' => 1,
 	],
 ]));
 
@@ -186,12 +195,19 @@ $renderer->addLayer(new PolyLineLayer(array_slice($markersLatLons, 3), [
 	],
 ]));
 
+
 $output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
 $mapimage = $output['image'];
 
 if($mapimage != null && $imgfactory != null)
 {
-	$imgfactory->saveImageToFile($mapimage, __DIR__."/map.webp");
+	$mapfilename = "map.webp";
+	if($imgfactory instanceof ImagickFactory)
+		$mapfilename = "map_imagick.webp";
+	else if($imgfactory instanceof GDImageFactory)
+		$mapfilename = "map_gd.webp";
+		
+	$imgfactory->saveImageToFile($mapimage, __DIR__ . "/" . $mapfilename);
 	$imgfactory->clearImage($mapimage);
 }
 
