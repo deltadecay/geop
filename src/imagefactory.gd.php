@@ -239,7 +239,7 @@ class GDImageCanvas implements Canvas
 		$this->image = $image;
 
 		$width = \imagesx($image);
-		$height = \imagesx($image);
+		$height = \imagesy($image);
 		
 		$this->drawing = \imagecreatetruecolor($width, $height);
 		/*// The internal drawing is a transparent image
@@ -251,6 +251,8 @@ class GDImageCanvas implements Canvas
 		// we must use the current image. Otherwise there will be black pixel shadows.
 		\imagealphablending($this->drawing, true);
 		\imagecopy($this->drawing, $image, 0, 0, 0, 0, $width, $height);
+		
+		//\imagesetclip($this->drawing, 0, 0, $width-1, $height-1);
 		
 		//$this->drawing = $image;
 
@@ -308,8 +310,8 @@ class GDImageCanvas implements Canvas
 
 		if(isset($style['strokelinecap']))
 		{
-			$strokelinecap = is_string($style['strokelinecap']) ? $style['strokelinecap'] : "butt";
-			/*$linecaps = [
+			/*$strokelinecap = is_string($style['strokelinecap']) ? $style['strokelinecap'] : "butt";
+			$linecaps = [
 				"undefined" => \Imagick::LINECAP_UNDEFINED,
 				"butt" => \Imagick::LINECAP_BUTT,
 				"round" => \Imagick::LINECAP_ROUND, 
@@ -322,8 +324,8 @@ class GDImageCanvas implements Canvas
 
 		if(isset($style['strokelinejoin']))
 		{
-			$strokelinejoin = is_string($style['strokelinejoin']) ? $style['strokelinejoin'] : "miter";
-			/*$linejoins = [
+			/*$strokelinejoin = is_string($style['strokelinejoin']) ? $style['strokelinejoin'] : "miter";
+			$linejoins = [
 				"undefined" => \Imagick::LINEJOIN_UNDEFINED ,
 				"miter" => \Imagick::LINEJOIN_MITER,
 				"mitre" => \Imagick::LINEJOIN_MITER,
@@ -366,8 +368,8 @@ class GDImageCanvas implements Canvas
 
 		if(isset($style['textalignment']))
 		{
-			$textalignment = is_string($style['textalignment']) ? $style['textalignment'] : "left";
-			/*$alignments = [
+			/*$textalignment = is_string($style['textalignment']) ? $style['textalignment'] : "left";
+			$alignments = [
 				"undefined" => \Imagick::ALIGN_UNDEFINED,
 				"left" => \Imagick::ALIGN_LEFT,
 				"center" => \Imagick::ALIGN_CENTER, 
@@ -379,8 +381,8 @@ class GDImageCanvas implements Canvas
 
 		if(isset($style['textdecoration']))
 		{
-			$textdecoration = is_string($style['textdecoration']) ? $style['textdecoration'] : "no";
-			/*$decorations = [
+			/*$textdecoration = is_string($style['textdecoration']) ? $style['textdecoration'] : "no";
+			$decorations = [
 				"no" => \Imagick::DECORATION_NO,
 				"none" => \Imagick::DECORATION_NO,
 				"off" => \Imagick::DECORATION_NO,
@@ -715,7 +717,7 @@ class GDImageCanvas implements Canvas
 			
 			if($fontfile != '')
 			{
-				$bbox = \imagettfbbox($fontsize, 0, $fontfile, $text, $options);
+				//$bbox = \imagettfbbox($fontsize, 0, $fontfile, $text, $options);
 				\imagettftext($drawing, $fontsize, $angle, intval($p->x), intval($p->y), $c, $fontfile, $text, $options);
 			}
 		}
