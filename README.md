@@ -233,8 +233,7 @@ In the folder **[example/](example/)** there are a couple of simple demo apps th
 
 ## Requirements
 
-Developed in php and tested in 5.6, 8.2 and 8.4. Php built with the Imagick extension is needed to use the
-**ImagickFactory** rendering backend.
+Developed in php and tested in 5.6, 8.2, 8.4 and 8.5. Php built with the Imagick and/or GD extensions are needed to use the available rendering backends.
 
 ## Tests
 
