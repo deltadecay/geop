@@ -717,16 +717,66 @@ class GDImageCanvas implements Canvas
 			$p1 = $m->transform(new Point(1,0));
 			$angle = rad2deg(atan2($p1->y - $p0->y, $p1->x - $p0->x));
 			
-			$options = [];
+			$linespacing = 0;
 			if(isset($style['textlinespacing']) && is_numeric($style['textlinespacing']))
 			{
-				$options['linespacing'] = floatval($style['textlinespacing']);
+				$linespacing = floatval($style['textlinespacing']);
 			}
+			
+			$textalignment = is_string($style['textalignment']) ? $style['textalignment'] : "left";
+			$alignmulw = 0;
+			if($textalignment == "left") $alignmulw = 0;
+			elseif($textalignment == "center") $alignmulw = -0.5;
+			elseif($textalignment == "right") $alignmulw = -1;
+			
+			$textdecoration = is_string($style['textdecoration']) ? $style['textdecoration'] : "";
+			$decomulh = 0;
+			if($textdecoration == "underline") $decomulh = 0;
+			elseif($textdecoration == "overline") $decomulh = 1.0;
+			elseif($textdecoration == "linethrough") $decomulh = 0.5;
 			
 			if($fontfile != '')
 			{
-				//$bbox = \imagettfbbox($fontsize, 0, $fontfile, $text, $options);
-				\imagettftext($drawing, $fontsize, $angle, intval($p->x), intval($p->y), $c, $fontfile, $text, $options);
+				$bbox = \imagettfbbox($fontsize, 0, $fontfile, "d", ['linespacing' => 0]);
+				$decoh = abs($bbox[7] - $bbox[1]);
+				
+				$lines = explode("\n", $text);
+				foreach($lines as $i => $line)
+				{
+					// Use angle=0 to fetch the axis aligned text, so we know the width and height
+					// We pass linespacing=0 in the options to imagettfbbox and imagettftext
+					// since it doesn't really work and does not support line breaks anyway.
+					$bbox = \imagettfbbox($fontsize, 0, $fontfile, $line, ['linespacing' => 0]);
+					$texth = abs($bbox[7] - $bbox[1]);
+					$textw = abs($bbox[2] - $bbox[0]);
+				
+					//\imagerectangle($drawing, $p->x + $bbox[6], $p->y + $bbox[7], $p->x + $bbox[2], $p->y + $bbox[3], $c);
+					
+					// new-line vector for the i:th line
+					$nldx = cos(deg2rad($angle - 90)) * $i*($texth + $linespacing);
+					$nldy = -sin(deg2rad($angle - 90)) * $i*($texth + $linespacing);
+					
+					// alignment vector
+					$aligndx = cos(deg2rad($angle)) * $alignmulw * $textw;
+					$aligndy = -sin(deg2rad($angle)) * $alignmulw * $textw;
+					
+					$x = intval($p->x + $nldx + $aligndx);
+					$y = intval($p->y + $nldy + $aligndy);
+					\imagettftext($drawing, $fontsize, $angle, $x, $y, $c, $fontfile, $line, ['linespacing' => 0]);	
+	
+					if($textdecoration != "")
+					{
+						// decoration vector
+						$decodx = cos(deg2rad($angle + 90)) * $decomulh * $decoh;
+						$decody = -sin(deg2rad($angle + 90)) * $decomulh * $decoh;
+						
+						$x1 = intval($p->x + $nldx + $aligndx + $decodx);
+						$y1 = intval($p->y + $nldy + $aligndy + $decody);
+						$x2 = intval($p->x + $nldx + $aligndx + $decodx + cos(deg2rad($angle))*$textw);
+						$y2 = intval($p->y + $nldy + $aligndy + $decody - sin(deg2rad($angle))*$textw);
+						\imageline($drawing, $x1, $y1, $x2, $y2, $c);
+					}
+				}
 			}
 		}
 	}
