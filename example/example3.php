@@ -13,6 +13,7 @@ use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
+use \geop\GDImageFactory;
 
 // Render a map with geojson
 // Zoom is computed and depends on the boundingbox and the size of the map image.
@@ -30,6 +31,10 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
+if($imgfactory == null)
+{
+	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
+}
 $renderer = new MapRenderer($map, $imgfactory);
 $renderer->addLayer(new TileLayer($tileservice));
 

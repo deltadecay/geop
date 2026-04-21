@@ -292,7 +292,8 @@ class GDImageCanvas implements Canvas
 		
 		if(isset($style['strokeantialias']))
 		{
-			\imageantialias($drawing, !!$style['strokeantialias']);
+			// Antialias doesn't work well with imagesetthickness
+			//\imageantialias($drawing, !!$style['strokeantialias']);
 		}
 
 		if(isset($style['strokecolor']) && is_string($style['strokecolor']))
@@ -602,12 +603,28 @@ class GDImageCanvas implements Canvas
 			$c = $this->getGDColor($style['fillcolor']);
 			if($c !== null)
 			{
-				\imagefilledellipse($drawing, $p->x, $p->y, $radius * 2, $radius * 2, $c);				
+				\imagefilledellipse($drawing, intval($p->x), intval($p->y), intval($radius * 2), intval($radius) * 2, $c);				
 			}
 			$c = $this->getGDColor($style['strokecolor']);
 			if($style['strokewidth'] > 0.01 && $c !== null)
 			{
-				\imageellipse($drawing, $p->x, $p->y, $radius * 2, $radius * 2, $c);				
+				//\imageellipse($drawing, intval($p->x), intval($p->y), intval($radius * 2), intval($radius * 2), $c);		
+		
+				// Drawing an ellipse in GD doesn't support setting the stroke thickness, so a solutions is to draw multiple ellipses
+				// beside each other. This is not perfect as some pixels won't be colored.
+				$i = 0;
+				$thickness = 2 * intval($style['strokewidth']);
+				$elipsew = intval($radius * 2 - $thickness/2) + 1;
+				$elipseh = intval($radius * 2 - $thickness/2) + 1;
+				$x = intval($p->x);
+				$y = intval($p->y);
+				while ($i < $thickness) 
+				{
+					\imageellipse($drawing, $x, $y, $elipsew, $elipseh, $c);
+					$elipsew++;
+					$elipseh++;
+					$i++;
+				}		
 			}
 		}
 	}
