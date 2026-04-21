@@ -716,6 +716,10 @@ class GDImageCanvas implements Canvas
 			$p0 = $m->transform(new Point(0,0));
 			$p1 = $m->transform(new Point(1,0));
 			$angle = rad2deg(atan2($p1->y - $p0->y, $p1->x - $p0->x));
+			$cosa = cos(deg2rad($angle));
+			$sina = sin(deg2rad($angle));
+			$cosa90 = cos(deg2rad($angle + 90));
+			$sina90 = sin(deg2rad($angle + 90));
 			
 			$linespacing = 0;
 			if(isset($style['textlinespacing']) && is_numeric($style['textlinespacing']))
@@ -753,18 +757,17 @@ class GDImageCanvas implements Canvas
 					// We pass linespacing=0 in the options to imagettfbbox and imagettftext
 					// since it doesn't really work and does not support line breaks anyway.
 					$bbox = \imagettfbbox($fontsize, 0, $fontfile, $line, ['linespacing' => 0]);
-					$texth = abs($bbox[7] - $bbox[1]);
-					$textw = abs($bbox[2] - $bbox[0]);
-				
+					$texth = abs($bbox[7] - $bbox[1]) + 1;
+					$textw = abs($bbox[2] - $bbox[0]) + 1;
 					//\imagerectangle($drawing, $p->x + $bbox[6], $p->y + $bbox[7], $p->x + $bbox[2], $p->y + $bbox[3], $c);
 					
 					// new-line vector for the i:th line
-					$nldx = cos(deg2rad($angle - 90)) * $i*($texth + $linespacing);
-					$nldy = -sin(deg2rad($angle - 90)) * $i*($texth + $linespacing);
+					$nldx = -$cosa90 * $i*($texth + $linespacing);
+					$nldy = $sina90 * $i*($texth + $linespacing);
 					
 					// alignment vector
-					$aligndx = cos(deg2rad($angle)) * $alignmulw * $textw;
-					$aligndy = -sin(deg2rad($angle)) * $alignmulw * $textw;
+					$aligndx = $cosa * $alignmulw * $textw;
+					$aligndy = -$sina * $alignmulw * $textw;
 					
 					$x = $p->x + $nldx + $aligndx;
 					$y = $p->y + $nldy + $aligndy;
@@ -772,18 +775,18 @@ class GDImageCanvas implements Canvas
 					// Render background of text if color specified
 					if($textbg != null)
 					{
-						$horizdx = cos(deg2rad($angle))*$textw;
-						$horizdy = -sin(deg2rad($angle))*$textw;
-						$vertdx = cos(deg2rad($angle + 90))*$texth;
-						$vertdy = -sin(deg2rad($angle + 90))*$texth;
-						$bgpoints = [
+						$horizdx = $cosa*$textw;
+						$horizdy = -$sina*$textw;
+						$vertdx = $cosa90*$texth;
+						$vertdy = -$sina90*$texth;
+						$bgpolypoints = [
 							$x, $y,
 							$x + $horizdx, $y + $horizdy,
 							$x + $horizdx + $vertdx, $y + $horizdy + $vertdy,
 							$x + $vertdx, $y + $vertdy,
 						];
 						
-						\imagefilledpolygon($drawing, $bgpoints, $textbg);
+						\imagefilledpolygon($drawing, $bgpolypoints, $textbg);
 					}
 					
 					// This is the data needed for rendering each line of text
@@ -794,7 +797,7 @@ class GDImageCanvas implements Canvas
 				
 				// Use the letter 'd' to decide height of where to place text decoration lines
 				$bbox = \imagettfbbox($fontsize, 0, $fontfile, "d", ['linespacing' => 0]);
-				$decoh = abs($bbox[7] - $bbox[1]);
+				$decoh = abs($bbox[7] - $bbox[1]) + 1;
 				
 				foreach($textredering as $tr)
 				{
@@ -807,13 +810,13 @@ class GDImageCanvas implements Canvas
 					{
 						$textw = $tr['textw'];
 						// decoration vector
-						$decodx = cos(deg2rad($angle + 90)) * $decomulh * $decoh;
-						$decody = -sin(deg2rad($angle + 90)) * $decomulh * $decoh;
+						$decodx = $cosa90 * $decomulh * $decoh;
+						$decody = -$sina90 * $decomulh * $decoh;
 						
 						$x1 = intval($x + $decodx);
 						$y1 = intval($y + $decody);
-						$x2 = intval($x + $decodx + cos(deg2rad($angle))*$textw);
-						$y2 = intval($y + $decody - sin(deg2rad($angle))*$textw);
+						$x2 = intval($x + $decodx + $cosa*$textw);
+						$y2 = intval($y + $decody - $sina*$textw);
 						\imageline($drawing, $x1, $y1, $x2, $y2, $c);
 					}
 				}

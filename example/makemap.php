@@ -156,18 +156,18 @@ list($latlon, $zoom) = $renderer->fitBounds($markersLatLons[0], $markersLatLons[
 $renderer->addLayer(new TextLayer($markersLatLons[1], "Madrid\nSpain", [
 	"angle" => 30,
 	"style" => [
-		'strokecolor' => 'black',
+		'strokecolor' => 'transparent',
 		'fillcolor' => 'black',
 		'strokewidth' => 0,
 		'font' => __DIR__."/../assets/MesloLGS NF Regular.ttf",
-		'fontsize' => 24,
+		'fontsize' => 16,
 		'textantialias' => true,
-		'textalignment' => 'left',
+		'textalignment' => 'center',
 		'textdecoration' => 'underline',
 		'textkerning' => 0,
 		'textlinespacing' => 0,
 		'textwordspacing' => 0,
-		'textundercolor' => 'lime',
+		'textundercolor' => 'rgba(0,255,0,0.3)',
 	]
 ]));
 
