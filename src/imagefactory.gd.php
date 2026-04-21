@@ -556,7 +556,7 @@ class GDImageCanvas implements Canvas
 					}	
 					
 					$c = $this->getGDColor($style['strokecolor']);
-					if($style['strokewidth'] > 0.01 && $c !== null)
+					if($style['strokewidth'] > 0 && $c !== null)
 					{
 						\imagepolygon($drawing, $points, $c);
 					}	
@@ -583,12 +583,20 @@ class GDImageCanvas implements Canvas
 				$points[2*$i + 1] = $tp->y;
 				$i++;
 			}
-
+			$numpoints = $i;
 			$style = $this->getStyle();
 			$c = $this->getGDColor($style['strokecolor']);
-			if($style['strokewidth'] > 0.01 && $c !== null)
+			if($style['strokewidth'] > 0 && $c !== null)
 			{
-				\imageopenpolygon($drawing, $points, $c);
+				if($numpoints >= 3)
+				{
+					\imageopenpolygon($drawing, $points, $c);
+				}
+				else
+				{
+					$last = 2 * ($numpoints - 1);
+					\imageline($drawing, intval($points[0]), intval($points[1]), intval($points[$last]), intval($points[$last+1]), $c);
+				}
 			}
 		}
 	}
@@ -608,7 +616,7 @@ class GDImageCanvas implements Canvas
 				\imagefilledellipse($drawing, intval($p->x), intval($p->y), intval($radius * 2), intval($radius) * 2, $c);				
 			}
 			$c = $this->getGDColor($style['strokecolor']);
-			if($style['strokewidth'] > 0.01 && $c !== null)
+			if($style['strokewidth'] > 0 && $c !== null)
 			{
 				//\imageellipse($drawing, intval($p->x), intval($p->y), intval($radius * 2), intval($radius * 2), $c);		
 		
@@ -651,7 +659,7 @@ class GDImageCanvas implements Canvas
 				\imagefilledpolygon($drawing, [$p1->x, $p1->y, $p2->x, $p2->y, $p3->x, $p3->y, $p4->x, $p4->y], $c);	
 			}
 			$c = $this->getGDColor($style['strokecolor']);
-			if($style['strokewidth'] > 0.01 && $c !== null)
+			if($style['strokewidth'] > 0 && $c !== null)
 			{
 				//\imagerectangle($drawing, $p1->x, $p1->y, $p2->x, $p2->y, $c);	
 				// The above draws axis aligned, but we have transformed points, thus must draw with polygon.

@@ -14,6 +14,7 @@ use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
+use \geop\GDImageFactory;
 
 // This example illustrates the Tissot's indicatrix of deformation of the 
 // pseudo Mercator projection EPSG:3857. It loads a geojson with circles located at different latitudes.
@@ -34,6 +35,10 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
+if($imgfactory == null)
+{
+	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
+}
 $renderer = new MapRenderer($map, $imgfactory);
 $renderer->addLayer(new TileLayer($tileservice));
 
