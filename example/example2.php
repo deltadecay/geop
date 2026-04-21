@@ -12,6 +12,7 @@ use \geop\FileTileCache;
 use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\ImagickFactory;
+use \geop\GDImageFactory;
 
 // Render a map with WMS tiles in CRS EPSG:4326 by fitting a boundingbox into view. 
 // Zoom is computed and depends on the boundingbox and the size of the map image.
@@ -37,6 +38,10 @@ $map = new Map(new CRS_EPSG4326());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
+if($imgfactory == null)
+{
+	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
+}
 $renderer = new MapRenderer($map, $imgfactory);
 $renderer->addLayer(new TileLayer($tileservice));
 

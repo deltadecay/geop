@@ -12,6 +12,7 @@ use \geop\FileTileCache;
 use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\ImagickFactory;
+use \geop\GDImageFactory;
 
 // Given a lat lon position and zoom level, render a map with OpenStreetMap tiles
 
@@ -31,6 +32,10 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
+if($imgfactory == null)
+{
+	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
+}
 $renderer = new MapRenderer($map, $imgfactory);
 $renderer->addLayer(new TileLayer($tileservice));
 

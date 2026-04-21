@@ -1,13 +1,12 @@
-# Geop 
+# Geop
 
 Render images of maps in php.
 
-* Render maps with tile providers such as OpenStreetMap
-* Render maps with WMS based services
-* Project/unproject lat/lon points
-* Supported map projections EPSG:3857, EPSG:3395 and EPSG:4326 
-* Render geojson geometries
-
+- Render maps with tile providers such as OpenStreetMap
+- Render maps with WMS based services
+- Project/unproject lat/lon points
+- Supported map projections EPSG:3857, EPSG:3395 and EPSG:4326
+- Render geojson geometries
 
 ## Render a map image
 
@@ -29,7 +28,7 @@ use \geop\ImagickFactory;
 $latlon = new LatLon(41.381073, 2.173224);
 $zoom = 5;
 
-$tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}/{y}.png"], 
+$tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
                             new FileTileCache('osm'));
 
 $map = new Map(new CRS_EPSG3857());
@@ -45,22 +44,19 @@ $imgfactory->saveImageToFile($output['image'], "assets/map1.webp");
 
 ![Map](assets/map1.webp)
 
-
 ## Pseudo Mercator projection
 
 Understanding the pseudo Mercator map projection EPSG:3857 is easiest with an image. This shows the [Tissot's indicatrix](https://en.wikipedia.org/wiki/Tissot%27s_indicatrix). Each one of the circles has a radius of 200km
-and they are placed at latitudes {-70, -60, -40, -20, 0, 20, 40, 60, 70} and longitudes 
+and they are placed at latitudes {-70, -60, -40, -20, 0, 20, 40, 60, 70} and longitudes
 {-160, -120, -80, -40, 0, 40, 80, 120, 160}. At equator the scaling factor of the projection is one, but as we get further away from the equator the scaling factor increases. This means countries further away from the equator have an inflated size in this projection.
 
 ![Map](assets/map4.webp)
 
 The file **[example/circles.geojson](example/circles.geojson)** can be viewed at [https://geojson.io](https://geojson.io) and switching between Globe/Mercator demonstrates the effect.
 
-
-
 ## WMS tiles
 
-Web Map Services (WMS) can be used with the **[WMSTileService](src/tileservice.php)**. 
+Web Map Services (WMS) can be used with the **[WMSTileService](src/tileservice.php)**.
 
 ```php
 use \geop\WMSTileService;
@@ -96,6 +92,7 @@ $imgfactory->saveImageToFile($output['image'], "assets/map2.webp");
 ## Geojson
 
 The map renderer supports adding a geojson layer:
+
 ```php
 use \geop\GeoJsonLayer;
 ```
@@ -105,7 +102,7 @@ use \geop\GeoJsonLayer;
 list($latlon, $zoom) = $renderer->fitBounds(new LatLon(53.39861676102, 9.77002), new LatLon(53.705006628648, 10.211535), 640, 400);
 
 // Add a geojson layer with some geometries
-// The outer contour of the polygon is the above bounding box 
+// The outer contour of the polygon is the above bounding box
 $gjson = file_get_contents(__DIR__."/hamburg.geojson");
 // Define style for the rendered geometries
 $style = [
@@ -121,15 +118,16 @@ $renderer->addLayer(new GeoJsonLayer($gjson, ['swapxy' => false, 'pointradius' =
 
 ![Map](assets/map3.webp)
 
-
 ## Markers
 
 A marker image can be added as a layer to the map:
+
 ```php
 use \geop\MarkerLayer;
 ```
 
-Configure the **markericon** field to point to an image: 
+Configure the **markericon** field to point to an image:
+
 ```php
 $renderer->addLayer(new MarkerLayer($latlon, [
 	'markericon' => "assets/marker-icon.png",
@@ -140,10 +138,12 @@ $renderer->addLayer(new MarkerLayer($latlon, [
 	'shadoworigin' => [12, 40],
 ]));
 ```
+
 An image to represent the shadow can also be set. The size fields are used to override the size of the images.
 The origin fields configure where in the image the tip of the marker is.
 
 If you don't have a marker image, a marker symbol is drawn onto the map with overridden style:
+
 ```php
 $renderer->addLayer(new MarkerLayer($latlon, [
 	'markersize' => [20, 30],
@@ -158,10 +158,10 @@ $renderer->addLayer(new MarkerLayer($latlon, [
 ]));
 ```
 
-
 ## Text
 
 Use **TextLayer** to add text annotation to the map.
+
 ```php
 use \geop\TextLayer;
 ```
@@ -189,6 +189,7 @@ $renderer->addLayer(new TextLayer($latlon, "Hello world", [
 
 If you want to add geometries but not in the geojson format, you can add polylines and polygons
 as separate layers:
+
 ```php
 use \geop\PolygonLayer;
 use \geop\PolyLineLayer;
@@ -218,19 +219,23 @@ $renderer->addLayer(new PolyLineLayer($polyline, [
 ]));
 ```
 
-
 ## Rendering backend
-See the interface **[ImageFactory](src/imagefactory.php)** and **[Canvas](src/imagefactory.php)** for what to implement for a custom
-rendering backend. **[ImagickFactory](src/imagefactory.php)** and **[ImagickCanvas](src/imagefactory.php)** implements a rendering backend using the php Imagick extension.
 
+See the interface **[ImageFactory](src/imagefactory.php)** and **[Canvas](src/imagefactory.php)** for what to implement for a custom
+rendering backend. There are two implementations available:
+
+- **[ImagickFactory](src/imagefactory.imagick.php)** and **[ImagickCanvas](src/imagefactory.imagick.php)** implements a rendering backend using the php Imagick extension.
+- **[GDImageFactory](src/imagefactory.gd.php)** and **[GDImageCanvas](src/imagefactory.gd.php)** implements a rendering backend using php's GD library.
 
 ## Demo apps
+
 In the folder **[example/](example/)** there are a couple of simple demo apps that showcase rendering of maps in different ways.
 
 ## Requirements
-Developed in php and tested in 5.6, 8.2 and 8.4. Php built with the Imagick extension is needed to use the
-**ImagickFactory** rendering backend. 
 
+Developed in php and tested in 5.6, 8.2 and 8.4. Php built with the Imagick extension is needed to use the
+**ImagickFactory** rendering backend.
 
 ## Tests
-To run the tests you need [pest](https://github.com/deltadecay/pest) installed parallel to *geop*.
+
+To run the tests you need [pest](https://github.com/deltadecay/pest) installed parallel to _geop_.

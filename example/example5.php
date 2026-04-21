@@ -13,6 +13,7 @@ use \geop\MapRenderer;
 use \geop\TileLayer;
 use \geop\GeoJsonLayer;
 use \geop\ImagickFactory;
+use \geop\GDImageFactory;
 
 // Render a map with geojson where the polygons lie in the longitude boundary 180/-180
 // Note! Some of the longitude values are < -180 in the first geometry, while > 180 in the second.
@@ -36,6 +37,10 @@ $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
 $map->setTileSize(256);
 $imgfactory = class_exists('Imagick') ? new ImagickFactory() : null;
+if($imgfactory == null)
+{
+	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
+}
 $renderer = new MapRenderer($map, $imgfactory);
 $renderer->addLayer(new TileLayer($tileservice));
 
