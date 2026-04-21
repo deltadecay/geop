@@ -685,8 +685,8 @@ class GDImageCanvas implements Canvas
 
 	public function drawText($point, $text)
 	{
-		// TODO: GD doesn't support newline characters in the text, nor alignment
-		// so a custom layouting is needed
+		// GD doesn't support newline characters in the text, alignment, nor text decoration such as underline
+		// out of the box so this method implements these.
 		
 		$drawing = $this->drawing;
 		if($drawing != null)
@@ -735,12 +735,18 @@ class GDImageCanvas implements Canvas
 			elseif($textdecoration == "overline") $decomulh = 1.0;
 			elseif($textdecoration == "linethrough") $decomulh = 0.5;
 			
+			$textbg = null;
+			if(isset($style['textundercolor']) && is_string($style['textundercolor']))
+			{
+				$textbg = $this->getGDColor($style['textundercolor']);
+			}
+			
 			if($fontfile != '')
 			{
-				$bbox = \imagettfbbox($fontsize, 0, $fontfile, "d", ['linespacing' => 0]);
-				$decoh = abs($bbox[7] - $bbox[1]);
-				
+
 				$lines = explode("\n", $text);
+				
+				$textredering = [];
 				foreach($lines as $i => $line)
 				{
 					// Use angle=0 to fetch the axis aligned text, so we know the width and height
@@ -760,20 +766,54 @@ class GDImageCanvas implements Canvas
 					$aligndx = cos(deg2rad($angle)) * $alignmulw * $textw;
 					$aligndy = -sin(deg2rad($angle)) * $alignmulw * $textw;
 					
-					$x = intval($p->x + $nldx + $aligndx);
-					$y = intval($p->y + $nldy + $aligndy);
-					\imagettftext($drawing, $fontsize, $angle, $x, $y, $c, $fontfile, $line, ['linespacing' => 0]);	
+					$x = $p->x + $nldx + $aligndx;
+					$y = $p->y + $nldy + $aligndy;
+					
+					// Render background of text if color specified
+					if($textbg != null)
+					{
+						$horizdx = cos(deg2rad($angle))*$textw;
+						$horizdy = -sin(deg2rad($angle))*$textw;
+						$vertdx = cos(deg2rad($angle + 90))*$texth;
+						$vertdy = -sin(deg2rad($angle + 90))*$texth;
+						$bgpoints = [
+							$x, $y,
+							$x + $horizdx, $y + $horizdy,
+							$x + $horizdx + $vertdx, $y + $horizdy + $vertdy,
+							$x + $vertdx, $y + $vertdy,
+						];
+						
+						\imagefilledpolygon($drawing, $bgpoints, $textbg);
+					}
+					
+					// This is the data needed for rendering each line of text
+					$textredering[] = ['x' => $x, 'y' => $y, 'line' => $line, 'textw' => $textw];
+				}
+				
+				// Render the lines of text after rendering the background of each line.
+				
+				// Use the letter 'd' to decide height of where to place text decoration lines
+				$bbox = \imagettfbbox($fontsize, 0, $fontfile, "d", ['linespacing' => 0]);
+				$decoh = abs($bbox[7] - $bbox[1]);
+				
+				foreach($textredering as $tr)
+				{
+					$line = $tr['line'];
+					$x = $tr['x'];
+					$y = $tr['y'];
+					\imagettftext($drawing, $fontsize, $angle, intval($x), intval($y), $c, $fontfile, $line, ['linespacing' => 0]);	
 	
 					if($textdecoration != "")
 					{
+						$textw = $tr['textw'];
 						// decoration vector
 						$decodx = cos(deg2rad($angle + 90)) * $decomulh * $decoh;
 						$decody = -sin(deg2rad($angle + 90)) * $decomulh * $decoh;
 						
-						$x1 = intval($p->x + $nldx + $aligndx + $decodx);
-						$y1 = intval($p->y + $nldy + $aligndy + $decody);
-						$x2 = intval($p->x + $nldx + $aligndx + $decodx + cos(deg2rad($angle))*$textw);
-						$y2 = intval($p->y + $nldy + $aligndy + $decody - sin(deg2rad($angle))*$textw);
+						$x1 = intval($x + $decodx);
+						$y1 = intval($y + $decody);
+						$x2 = intval($x + $decodx + cos(deg2rad($angle))*$textw);
+						$y2 = intval($y + $decody - sin(deg2rad($angle))*$textw);
 						\imageline($drawing, $x1, $y1, $x2, $y2, $c);
 					}
 				}
