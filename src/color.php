@@ -3,7 +3,8 @@
 
 namespace geop;
 
-$_color_map = [
+
+const COLOR_NAME_MAP = [
 	false => [0,0,0,0],
 	0 => [0,0,0,0],
 	"none" => [0,0,0,0],
@@ -181,7 +182,7 @@ $_color_map = [
 //
 function colorhex2rgba($color) 
 {
-	global $_color_map;
+	$_color_map = COLOR_NAME_MAP;
 	if(is_string($color))
 	{
 		$color = strtolower(trim($color));
