@@ -167,7 +167,7 @@ $renderer->addLayer(new TextLayer($markersLatLons[1], "Madrid\nSpain", [
 		'textkerning' => 0,
 		'textlinespacing' => 0,
 		'textwordspacing' => 0,
-		'textundercolor' => 'rgba(0,255,0,0.3)',
+		'textundercolor' => 'LightSalmon', //'rgba(0,255,0,0.3)',
 	]
 ]));
 
