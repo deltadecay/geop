@@ -14,6 +14,7 @@ class TileService
 	protected $options = [];
 	protected $cache = null;
 	protected $useragent = '';
+	protected $subdomain_idx = 0;
 
 	public function __construct($options, $cache = null)
 	{
@@ -36,10 +37,31 @@ class TileService
 
 	protected function makeUrl(Map $map, Point $tile, $zoom)
 	{
+		$url = $this->options['url'];
 		$x = intval($tile->x);
 		$y = intval($tile->y);
 		$z = intval($zoom);
-		$url = str_replace(['{x}', '{y}', '{z}'], [$x, $y, $z],$this->options['url']);
+
+		// {r} in the url means there are retina @2x images, but not supported here at the moment.
+		$url = str_replace(['{x}', '{y}', '{z}', '{r}'], [$x, $y, $z, ''], $url);
+
+		// {s} in the url means the tile service supports subdomains, defaults are a, b, c, 
+		// but can be configured via options flag subdomains either as a string (if one letter subdomains) or an array. 
+		if(stripos($url, "{s}") !== false) 
+		{
+			$subdomains = ['a', 'b', 'c'];
+			if(isset($this->options['subdomains']) && is_string($this->options['subdomains']) && strlen($this->options['subdomains']) > 0) 
+			{
+				$subdomains = str_split($this->options['subdomains']);
+			}
+			elseif(isset($this->options['subdomains']) && is_array($this->options['subdomains']) && count($this->options['subdomains']) > 0)
+			{
+				$subdomains = $this->options['subdomains'];
+			}
+			$idx = $this->subdomain_idx % count($subdomains);
+			$url = str_replace("{s}", $subdomains[$idx], $url);
+			$this->subdomain_idx++;
+		}
 		return $url;
 	}
 

@@ -33,10 +33,15 @@ $cachedir = __DIR__."/tilecache/";
 
 
 // © OpenStreetMap
-$tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}/{y}.png"], new FileTileCache('osm', $cachedir));
+//$tileservice = new TileService(["url" => "https://tile.openstreetmap.org/{z}/{x}/{y}.png"], new FileTileCache('osm', $cachedir));
 
 // © Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL
 $tileservice = new TileService(["url" => "https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png"], new FileTileCache('carto', $cachedir));
+
+/*$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_imagery', $cachedir));
+$tileservice_labels = new TileService(["url" => "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png", "subdomains" => "abcd"], new FileTileCache('cartodb.positrononlylabels', $cachedir));
+//$tileservice_labels = new TileService(["url" => "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png", "subdomains" => "abcd"], new FileTileCache('cartodb.darkmatteronlylabels', $cachedir));
+*/
 
 /*
 // OpenStreetMap contributors, by Wikimedia
@@ -69,8 +74,8 @@ $tileservice = new TileService([
 	], new FileTileCache('terrestris-osm', $cachedir));
 */
 
-//$tileservice->setUserAgent("MakeMapApp v1.0");
-$tileservice->setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KH TML, like Gecko) Version/18.3.1 Safari/605.1.15");
+//$useragent = "MakeMapApp v1.0";
+$useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KH TML, like Gecko) Version/18.3.1 Safari/605.1.15";
 
 $map = new Map(new CRS_EPSG3857());
 // OSM has tile size of 256 pixels
@@ -81,7 +86,16 @@ if($imgfactory == null)
 	$imgfactory = function_exists("imagecreatetruecolor") ? new GDImageFactory() : null;
 }
 $renderer = new MapRenderer($map, $imgfactory);
-$renderer->addLayer(new TileLayer($tileservice));
+if(isset($tileservice))
+{
+	$tileservice->setUserAgent($useragent);
+	$renderer->addLayer(new TileLayer($tileservice));
+}
+if(isset($tileservice_labels))
+{
+	$tileservice_labels->setUserAgent($useragent);
+	$renderer->addLayer(new TileLayer($tileservice_labels));
+}
 
 // Get center and zoom level from given lat lon bounds
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(35.999914, -9.30555), new LatLon(43.79495, 4.32936), $render_width-25, $render_height-25);
@@ -196,7 +210,7 @@ $renderer->addLayer(new PolyLineLayer(array_slice($markersLatLons, 3), [
 ]));
 
 
-$output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height);
+$output = $renderer->renderMap($latlon, $zoom, $render_width, $render_height, 'transparent');
 $mapimage = $output['image'];
 
 if($mapimage != null && $imgfactory != null)

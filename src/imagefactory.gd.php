@@ -9,7 +9,7 @@ require_once(__DIR__."/color.php");
 
 
 if (function_exists("\\imagecreatetruecolor")):
- 
+
 
 class GDImageFactory implements ImageFactory
 {
@@ -22,7 +22,8 @@ class GDImageFactory implements ImageFactory
 		$image = \imagecreatetruecolor($width, $height);
 		if ($image !== false) 
 		{
-			\imagealphablending($image, true);
+			// No blending on the new image, want to keep alpha channel
+			\imagealphablending($image, false);
 			
 			list($r, $g, $b, $a) = colorhex2rgba($bgcolor);
 			
@@ -35,7 +36,6 @@ class GDImageFactory implements ImageFactory
 				// GD alpha is opaque=0, transparent=127
 				$alpha = 127 - intval($a / 2);
 				$col = \imagecolorallocatealpha($image, $r, $g, $b, $alpha);
-				//\imagesavealpha($image, false);
 			}
 			\imagefill($image, 0, 0, $col);
 		}
@@ -46,10 +46,36 @@ class GDImageFactory implements ImageFactory
 	{
 		if($blob != null)
 		{
+			
 			$image = \imagecreatefromstring($blob);
+
+			/* 
+			// Load from blob data by using the filename method
+			$blobimgformat = imageblob_identify($blob);
+			$base64blob = base64_encode($blob);
+			
+			$image = false;
+			if($blobimgformat == "jpg" || $blobimgformat == "jpeg") 
+			{
+				$filename = 'data://image/jpg;base64,'.$base64blob;
+				$image = \imagecreatefromjpeg($filename);
+			}
+			elseif($blobimgformat == "png") 
+			{
+				$filename = 'data://image/png;base64,'.$base64blob;
+				$image = \imagecreatefrompng($filename);
+			}
+			elseif($blobimgformat == "webp") 
+			{
+				$filename = 'data://image/webp;base64,'.$base64blob;
+				$image = \imagecreatefromwebp($filename);
+			}
+			*/
+			
 			if($image !== false)
 			{
-				\imagealphablending($image, true);
+				// No blending on the new image, want to keep alpha channel
+				\imagealphablending($image, false);
 			} 
 			else
 			{
@@ -95,8 +121,18 @@ class GDImageFactory implements ImageFactory
 		{
 			$image = \imagecreatefromtga($filename);
 		}
+		else
+		{
+			echo "GDImageFactory::newImageFromFile(): Loading image with extension '$ext' not supported".PHP_EOL;
+		}
 		
-		return $image !== false ? $image : null;
+		if($image !== false)
+		{
+			// No blending on the new image, want to keep alpha channel
+			\imagealphablending($image, false);
+			return $image;
+		}
+		return null;
 	}
 	
 	
@@ -104,7 +140,7 @@ class GDImageFactory implements ImageFactory
 	{
 		if($dstImage != null && $srcImage != null)
 		{
-			//$dstImage->compositeImage($srcImage, \Imagick::COMPOSITE_SRCOVER, $offsetx, $offsety, \Imagick::CHANNEL_ALL);
+			\imagelayereffect($dstImage, IMG_EFFECT_ALPHABLEND);
 			
 			$srcw = \imagesx($srcImage);
 			$srch = \imagesy($srcImage);
@@ -120,6 +156,8 @@ class GDImageFactory implements ImageFactory
 		if($image != null)
 		{
 			$cropped = \imagecrop($image, ['x' => $offsetx, 'y' => $offsety, 'width' => $width, 'height' => $height]);
+			// No blending on the new image, want to keep alpha channel
+			\imagealphablending($cropped, false);
 			return $cropped !== false ? $cropped : null;
 		}
 		return null;
@@ -133,6 +171,9 @@ class GDImageFactory implements ImageFactory
 			$resized = \imagecreatetruecolor($width, $height);
 			if($resized !== false)
 			{
+				// No blending on the new image, want to keep alpha channel
+				\imagealphablending($resized, false);
+				
 				$srcw = \imagesx($image);
 				$srch = \imagesy($image);
 				\imagecopyresampled($resized, $image, 0, 0, 0, 0, $width, $height, $srcw, $srch);
@@ -167,6 +208,9 @@ class GDImageFactory implements ImageFactory
 	{
 		if($image != null)
 		{
+			// Save alpha channel (only certain file formats support it, such as png, webp)
+			\imagesavealpha($image, true);
+			
 			$ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 			if(strlen($ext) > 0 && strlen($format) == 0)
 			{
@@ -242,19 +286,13 @@ class GDImageCanvas implements Canvas
 		$height = \imagesy($image);
 		
 		$this->drawing = \imagecreatetruecolor($width, $height);
-		/*// The internal drawing is a transparent image
-		$bgcol = \imagecolorallocatealpha($this->drawing, 0, 0, 0, 127);
-		\imagealphablending($this->drawing, true);
-		\imagefill($this->drawing, 0, 0, $bgcol);
-		*/
 		// Antialias looks at existing pixel values so instead of black transparent image 
 		// we must use the current image. Otherwise there will be black pixel shadows.
-		\imagealphablending($this->drawing, true);
+
+		// No blending on the drawing, want to keep alpha channel, as the input image might have alpha channels.
+		\imagealphablending($this->drawing, false);
 		\imagecopy($this->drawing, $image, 0, 0, 0, 0, $width, $height);
 		
-		//\imagesetclip($this->drawing, 0, 0, $width-1, $height-1);
-		
-		//$this->drawing = $image;
 
 		// GD doesn't have a drawing mode, so this style (and transform) must be saved as a state		
 		// Apply default style
@@ -675,8 +713,8 @@ class GDImageCanvas implements Canvas
 		{
 			$m = $this->getTransform();
 			$p = $m->transform($point);
-			//$drawing->composite(\Imagick::COMPOSITE_SRCOVER, $x, $y, $width, $height, $image);
-			// 
+
+			\imagelayereffect($drawing, IMG_EFFECT_ALPHABLEND);
 			$srcw = \imagesx($image);
 			$srch = \imagesy($image);
 			\imagecopyresampled($drawing, $image, intval($p->x), intval($p->y), 0, 0, $width, $height, $srcw, $srch);
