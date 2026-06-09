@@ -38,9 +38,11 @@ $cachedir = __DIR__."/tilecache/";
 // © Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL
 $tileservice = new TileService(["url" => "https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png"], new FileTileCache('carto', $cachedir));
 
-/*$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_imagery', $cachedir));
+/*
+$tileservice = new TileService(["url" => "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], new FileTileCache('arcgis_world_imagery', $cachedir));
 $tileservice_labels = new TileService(["url" => "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png", "subdomains" => "abcd"], new FileTileCache('cartodb.positrononlylabels', $cachedir));
 //$tileservice_labels = new TileService(["url" => "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png", "subdomains" => "abcd"], new FileTileCache('cartodb.darkmatteronlylabels', $cachedir));
+//$tileservice_labels = new TileService(["url" => "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}.png", "subdomains" => "abcd"], new FileTileCache('cartodb.voyageronlylabels', $cachedir));
 */
 
 /*
@@ -98,10 +100,15 @@ if(isset($tileservice_labels))
 }
 
 // Get center and zoom level from given lat lon bounds
+// Spain
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(35.999914, -9.30555), new LatLon(43.79495, 4.32936), $render_width-25, $render_height-25);
+// Italy
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(36.267375089908796, 6.57711885384677), new LatLon(47.374091600428585, 18.653561659143662), $render_width-25, $render_height-25);
+// Sweden
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(55.31974042967917, 10.892585699156825), new LatLon(69.27194904018671, 23.906049057270423), $render_width-25, $render_height-25);
+// Hamburg
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(53.39861676102, 9.77002), new LatLon(53.705006628648, 10.211535), $render_width-25, $render_height-25);
+// Bangkok
 //list($latlon, $zoom) = $renderer->fitBounds(new LatLon(13.642184233115, 100.3790645425), new LatLon(13.942729914378, 100.71996160915), $render_width-25, $render_height-25);
 
 

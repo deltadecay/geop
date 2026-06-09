@@ -493,7 +493,7 @@ class GDImageCanvas implements Canvas
 	
 	// Apply matrix to the current 
 	// new transform = current * matrix
-	// This mimicks the behavior of the function Imagick::affine.
+	// This mimics the behavior of the function Imagick::affine.
 	public function setTransformation($matrix = null)
 	{
 		$drawing = $this->drawing;
@@ -700,7 +700,7 @@ class GDImageCanvas implements Canvas
 			if($style['strokewidth'] > 0 && $c !== null)
 			{
 				//\imagerectangle($drawing, $p1->x, $p1->y, $p2->x, $p2->y, $c);	
-				// The above draws axis aligned, but we have transformed points, thus must draw with polygon.
+				// The above imagerectangle draws axis aligned, but we have transformed points, thus must draw with polygon.
 				\imagepolygon($drawing, [$p1->x, $p1->y, $p2->x, $p2->y, $p3->x, $p3->y, $p4->x, $p4->y], $c);
 			}
 		}
@@ -788,7 +788,7 @@ class GDImageCanvas implements Canvas
 
 				$lines = explode("\n", $text);
 				
-				$textredering = [];
+				$textrendering = [];
 				foreach($lines as $i => $line)
 				{
 					// Use angle=0 to fetch the axis aligned text, so we know the width and height
@@ -828,7 +828,7 @@ class GDImageCanvas implements Canvas
 					}
 					
 					// This is the data needed for rendering each line of text
-					$textredering[] = ['x' => $x, 'y' => $y, 'line' => $line, 'textw' => $textw];
+					$textrendering[] = ['x' => $x, 'y' => $y, 'line' => $line, 'textw' => $textw];
 				}
 				
 				// Render the lines of text after rendering the background of each line.
@@ -837,7 +837,7 @@ class GDImageCanvas implements Canvas
 				$bbox = \imagettfbbox($fontsize, 0, $fontfile, "d", ['linespacing' => 0]);
 				$decoh = abs($bbox[7] - $bbox[1]) + 1;
 				
-				foreach($textredering as $tr)
+				foreach($textrendering as $tr)
 				{
 					$line = $tr['line'];
 					$x = $tr['x'];
