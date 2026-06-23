@@ -1,3 +1,3 @@
 #!/bin/sh
 
-docker build -t php:8.4.3-imagick .
+docker build -t php:8.5.7-imagick .
