@@ -9,14 +9,17 @@ function imageblob_identify($blob)
 		return 'jpg';
 	
 	$magic4 = substr($blob, 0, 4);
+	// 0x89 PNG
 	if($magic4 == pack("C4", 0x89, 0x50, 0x4e, 0x47) &&
 		substr($blob, 4, 4) == pack("C4", 0x0d, 0x0a, 0x1a, 0x0a))
 		return 'png';
 
+	// RIFF    WEBP
 	if($magic4  == pack("C4", 0x52, 0x49, 0x46, 0x46) &&
 		substr($blob, 8, 4) == pack("C4", 0x57, 0x45, 0x42, 0x50))
 		return 'webp';
-	
+
+	// GIF8
 	if($magic4 == pack("C4", 0x47, 0x49, 0x46, 0x38))
 		return 'gif';
 	
@@ -28,13 +31,16 @@ function imageblob_identify($blob)
 		return 'tif';
 	if($magic4  == pack("C4", 0x49, 0x49, 0x2b, 0x00))
 		return 'tif';
-	
+
+	// BM
 	if(substr($blob, 0, 2) == pack("C2", 0x42, 0x4d))
 		return 'bmp';
-	
+
+	// ftypheic
 	if(substr($blob, 4, 8) == pack("C8", 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63))
 		return 'heic';
-	
+
+	// JXL 
 	if(substr($blob, 0, 12) == pack("C12", 0x00, 0x00, 0x00, 0x0c, 0x4a, 0x58, 0x4c, 0x20, 0x0d, 0x0a, 0x87, 0x0a))
 		return 'jxl';
 	if(substr($blob, 0, 2) == pack("C2", 0xff, 0x0a))
