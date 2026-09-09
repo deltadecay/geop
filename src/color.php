@@ -177,7 +177,10 @@ const COLOR_NAME_MAP = [
 // - #RGB (3 chars hex) 
 // - rgb(r,g,b) where r,g,b are integers between 0 and 255, or floats between 0 and 1.0
 // - rgb(r%,g%,b%) where r,g,b are percentages between 0% and 100%
-// - rgba(r,g,b,a) same as for rgb but additional alpha component
+// - rgba(r,g,b,a) same as for rgb but with an additional alpha component
+// - hsl(h,s,l) where h a value between 0 and 360, s and l floats between 0 and 1.0
+// - hsl(h,s%,l%) where h a value between 0 and 360, s and l floats between 0% and 100%
+// - hsla(h,s,l,a) same as hsl but with an additional alpha component
 // - a named color: transparent, black, white, red, green, blue, yellow, cyan, magenta
 //
 function colorhex2rgba($color) 
@@ -236,6 +239,119 @@ function colorhex2rgba($color)
 			if($col[$i] > 255) $col[$i] = 255;
 			if($col[$i] < 0) $col[$i] = 0;
 		}
+		return $col;
+	}
+
+	$ishsla = substr($color, 0, 5) == "hsla(";
+	$ishsl = !$ishsla && substr($color, 0, 4) == "hsl(";
+	if($ishsl || $ishsla)
+	{
+		if($ishsla) $color = substr($color, 5);
+		elseif($ishsl) $color = substr($color, 4);
+		$color = rtrim($color, ")");
+
+		$col = $defaultColor;
+		$parts = explode(",", $color);
+
+		// Store the Hue,Sat,Light as values in the range [0,1]
+		$hsl = [0, 0, 0, 1];
+		foreach($parts as $i => $colcomp)
+		{
+			if($i == 0)
+			{
+				// hue is an angle 0 <= hue < 360 but we accept -360 <= hue < 360
+				// and normalize it to the range [0,1) 
+				// so that we can use it in the formula below.
+				$hsl[$i] = (fmod(floatval($colcomp) + 360, 360)) / 360.0;
+			}
+			else 
+			{
+				// saturation and lightness 0 <= s/l <= 100%
+				// or a float value between 0 <= s/l <= 1.0
+				if(stripos($colcomp, "%") !== false)
+				{
+					// floatval("25%") gives 25
+					$hsl[$i] = floatval($colcomp) / 100.0; 
+				}
+				elseif(stripos($colcomp, ".") !== false)
+				{
+					$hsl[$i] = floatval($colcomp); 
+				}
+				else
+				{
+					$hsl[$i] = floatval($colcomp) / 100.0;
+				}
+			}
+			if($hsl[$i] > 1.0) $hsl[$i] = 1.0;
+			if($hsl[$i] < 0.0) $hsl[$i] = 0.0;
+		}
+
+		// Convert from hsl to rgb
+		// hue 0 <= h <= 1
+		$h = $hsl[0];
+		// saturation 0 <= s <= 1
+		$s = $hsl[1];
+		// lightness 0 <= l <= 1
+		$l = $hsl[2];
+		// alpha 0 <= l <= 1
+		$a = $hsl[3];
+		
+		// Convert from hsl to rgb
+		$c = (1 - abs(2 * $l - 1)) * $s;
+		$x = $c * (1 - abs(fmod($h * 6, 2) - 1));
+		$m = $l - $c / 2;
+
+		$r = 0;
+		$g = 0;
+		$b = 0;
+
+		if($h >= 0 && $h < 1/6)
+		{
+			$r = $c;
+			$g = $x;
+			$b = 0;
+		}
+		else if($h >= 1/6 && $h < 2/6)
+		{
+			$r = $x;
+			$g = $c;
+			$b = 0;
+		}
+		else if($h >= 2/6 && $h < 3/6)
+		{
+			$r = 0;
+			$g = $c;
+			$b = $x;
+		}
+		else if($h >= 3/6 && $h < 4/6)
+		{
+			$r = 0;
+			$g = $x;
+			$b = $c;
+		}
+		else if($h >= 4/6 && $h < 5/6)
+		{
+			$r = $x;
+			$g = 0;
+			$b = $c;
+		}
+		else if($h >= 5/6 && $h < 1)
+		{
+			$r = $c;
+			$g = 0;
+			$b = $x;
+		}
+
+		$r = round(($r + $m) * 255);
+		$g = round(($g + $m) * 255);
+		$b = round(($b + $m) * 255);
+		$a = round($a * 255);
+
+		$col[0] = $r;
+		$col[1] = $g;
+		$col[2] = $b;
+		$col[3] = $a;
+
 		return $col;
 	}
 	

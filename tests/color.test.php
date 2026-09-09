@@ -59,3 +59,31 @@ test("colorhex2rgba, color from rgb() or rgba()", function(){
 	$col = \geop\colorhex2rgba("rgba(50%, 10%, 10%, 0.3)");
 	expect($col)->toBe([128,26,26,77]);
 });
+
+test("colorhex2rgba, color from hsl() or hsla()", function(){
+
+	$col = \geop\colorhex2rgba("hsl(0, 0%, 0%)");
+	expect($col)->toBe([0,0,0,255]);
+	
+	$col = \geop\colorhex2rgba("hsl(0, 0%, 100%)");
+	expect($col)->toBe([255,255,255,255]);
+
+	$col = \geop\colorhex2rgba("hsl(0, 100%, 50%)");
+	expect($col)->toBe([255,0,0,255]);
+
+	$col = \geop\colorhex2rgba("hsl(180,100%,25%)");
+	expect($col)->toBe([0,128,128,255]);
+
+	$col = \geop\colorhex2rgba("hsl(205, 76%, 92%)");
+	expect($col)->toBe([219,237,250,255]);
+
+	$col = \geop\colorhex2rgba("hsla(205, 76%, 92%, 0.5)");
+	expect($col)->toBe([219,237,250,128]);
+
+	$col = \geop\colorhex2rgba("hsla(205, 76%, 92%, 30%)");
+	expect($col)->toBe([219,237,250,77]);
+	
+	$col = \geop\colorhex2rgba("hsla(205, 76%, 92%, 0)");
+	expect($col)->toBe([219,237,250,0]);
+	
+});
