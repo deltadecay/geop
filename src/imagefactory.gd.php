@@ -263,7 +263,8 @@ class GDImageCanvas implements Canvas
 {
 	private $drawing = null;
 	private $image = null;
-
+	private $defaultStyle = [];
+	
 	// The current state
 	private $state = ['style' => [], 'transform' => null];
 	// The drawing state is a stack of style and transform settings. This allows for nested transformations and styles.
@@ -304,6 +305,8 @@ class GDImageCanvas implements Canvas
 			'strokelinecap' => 'butt',
 			'strokelinejoin' => 'miter',
 			'strokemiterlimit' => 10,
+			'strokedashoffset' => 0,
+			'strokedasharray' => null,
 			
 			'textantialias' => true,
 			'fontsize' => 12,
@@ -315,6 +318,7 @@ class GDImageCanvas implements Canvas
 			'textwordspacing' => 0,
 			'textundercolor' => 'transparent',
 		];
+		$this->defaultStyle = $style;
 		$this->setStyle($style);
 		$this->setTransformation(Matrix::identity());
 	}
@@ -382,6 +386,43 @@ class GDImageCanvas implements Canvas
 		if(isset($style['strokemiterlimit']) && is_numeric($style['strokemiterlimit']))
 		{
 			//$drawing->setStrokeMiterLimit($style['strokemiterlimit']);
+		}
+
+		if(isset($style['strokedashoffset']) && is_numeric($style['strokedashoffset']))
+		{
+			//$drawing->setStrokeDashOffset($style['strokedashoffset']);
+		}
+		// Since null is valid value (turn off dashes) cannot test with isset
+		// isset($style['strokedasharray'])
+		if(array_key_exists('strokedasharray', $style))
+		{
+			// used in the draw* methods
+			// 
+			if(is_array($style['strokedasharray']))
+			{
+				if(count($style['strokedasharray']) > 0)
+				{
+					//$drawing->setStrokeDashArray($style['strokedasharray']);
+				}
+				else
+				{
+					// Turn off dashes with empty array
+					//$drawing->setStrokeDashArray(null);
+				}
+			}
+			else
+			{
+				if(is_numeric($style['strokedasharray']) && $style['strokedasharray'] > 0)
+				{
+					// A numeric value is interpreted as a single dash length
+					//$drawing->setStrokeDashArray([$style['strokedasharray'], $style['strokedasharray']]);
+				}
+				else
+				{
+					// Non-numeric values or a zero turns off dashes
+					//$drawing->setStrokeDashArray(null);									
+				}
+			}
 		}
 
 		if(isset($style['fillcolor']) && is_string($style['fillcolor']))
@@ -455,8 +496,26 @@ class GDImageCanvas implements Canvas
 		//$drawing->setFontWeight(100); //100-900
 		//$drawing->setFontStretch(\Imagick::STRETCH_NORMAL);
 		//$drawing->setFontStyle(\Imagick::STYLE_NORMAL);
+
+
 		
-		$this->state['style'] = $style;
+		// Make sure the current set style in the state has all defaults
+		// since nothing is really set in this function (other than line thickness)
+		foreach($this->defaultStyle as $stylekey => $styleval)
+		{
+			// Only set defaults if not already set
+			if(!array_key_exists($stylekey, $this->state['style']))
+			{
+				$this->state['style'][$stylekey] = $styleval;
+			}
+		}
+
+		// Now set the style from params, overwriting any defaults or previous values
+		foreach($style as $stylekey => $styleval)
+		{
+			$this->state['style'][$stylekey] = $styleval;
+		}
+		//$this->state['style'] = $style;				
 	}
 
 
@@ -547,7 +606,88 @@ class GDImageCanvas implements Canvas
 		}
 		return null;
 	}
-	
+
+	private function setDashPattern($gdcolor)
+	{
+		if($gdcolor === null)
+		{
+			return false;
+		}
+		$m = $this->getTransform();
+		$style = $this->getStyle();
+		$dashPattern = array_key_exists('strokedasharray', $style) ? $style['strokedasharray'] : null;
+		
+		if($dashPattern != null)
+		{
+			if(is_numeric($dashPattern) && $dashPattern > 0)
+			{
+				$dashPattern = [$dashPattern, $dashPattern];
+			} 
+
+			if(!is_array($dashPattern) || count($dashPattern) == 0)
+			{
+				// Turn off dashes
+				return false;
+			}
+			if(count($dashPattern) == 1)
+			{
+				// If only one pattern (line) also add equal transparency
+				$dashPattern []= $dashPattern[0];
+			}
+			
+			// Scale the dash patterns 
+			$dashPattern = array_map(function($v) use ($m) { 
+				$tv = $m->transform(new Point($v, 0));
+				$t0 = $m->transform(new Point(0, 0));
+				$dx = $tv->x - $t0->x;
+				$dy = $tv->y - $t0->y;
+				$len = sqrt($dx*$dx + $dy*$dy);
+				return round($len, 0); 
+			}, $dashPattern);
+
+			// GD weird behaviour: must multiply with strokewidth to get proper dash pattern
+			$muldash = isset($style['strokewidth']) ? abs($style['strokewidth']) : 1;
+			
+			$gd_dashes = [];
+			$transparency = false;
+			foreach($dashPattern as $dashlen)
+			{
+				$colval = $transparency ? IMG_COLOR_TRANSPARENT : $gdcolor;
+				$fillvalues = array_fill(0, round($muldash * $dashlen), $colval);
+				foreach($fillvalues as $val)
+				{
+					$gd_dashes []= $val;
+				}
+				$transparency = !$transparency;
+			}
+			\imagesetstyle($this->drawing, $gd_dashes);
+			return true;
+		}
+		// Turn off dashes
+		return false;
+	}
+
+	public function drawLine($p1, $p2)
+	{
+		$drawing = $this->drawing;
+		if($drawing != null)
+		{
+			$m = $this->getTransform();
+			$style = $this->getStyle();
+			
+			$p1 = $m->transform($p1);
+			$p2 = $m->transform($p2);
+			
+			$col = $this->getGDColor($style['strokecolor']);
+			if($col != null)
+			{
+				$dashes = $this->setDashPattern($col);
+				if($dashes) 
+					$col = IMG_COLOR_STYLED;
+				\imageline($drawing, $p1->x, $p1->y, $p2->x, $p2->y, $col);
+			}
+		}
+	}
 	
 	public function drawPolygon($polygon)
 	{
@@ -596,6 +736,9 @@ class GDImageCanvas implements Canvas
 					$c = $this->getGDColor($style['strokecolor']);
 					if($style['strokewidth'] > 0 && $c !== null)
 					{
+						$dashes = $this->setDashPattern($c);
+						if($dashes) 
+							$c = IMG_COLOR_STYLED;
 						\imagepolygon($drawing, $points, $c);
 					}	
 					$ri++;
@@ -626,6 +769,9 @@ class GDImageCanvas implements Canvas
 			$c = $this->getGDColor($style['strokecolor']);
 			if($style['strokewidth'] > 0 && $c !== null)
 			{
+				$dashes = $this->setDashPattern($c);
+				if($dashes) 
+					$c = IMG_COLOR_STYLED;
 				if($numpoints >= 3)
 				{
 					\imageopenpolygon($drawing, $points, $c);
@@ -656,6 +802,10 @@ class GDImageCanvas implements Canvas
 			$c = $this->getGDColor($style['strokecolor']);
 			if($style['strokewidth'] > 0 && $c !== null)
 			{
+				$dashes = $this->setDashPattern($c);
+				if($dashes) 
+					$c = IMG_COLOR_STYLED;
+					
 				//\imageellipse($drawing, intval($p->x), intval($p->y), intval($radius * 2), intval($radius * 2), $c);		
 		
 				// Drawing an ellipse in GD doesn't support setting the stroke thickness, so a solutions is to draw multiple ellipses
@@ -699,6 +849,10 @@ class GDImageCanvas implements Canvas
 			$c = $this->getGDColor($style['strokecolor']);
 			if($style['strokewidth'] > 0 && $c !== null)
 			{
+				$dashes = $this->setDashPattern($c);
+				if($dashes) 
+					$c = IMG_COLOR_STYLED;
+					
 				//\imagerectangle($drawing, $p1->x, $p1->y, $p2->x, $p2->y, $c);	
 				// The above imagerectangle draws axis aligned, but we have transformed points, thus must draw with polygon.
 				\imagepolygon($drawing, [$p1->x, $p1->y, $p2->x, $p2->y, $p3->x, $p3->y, $p4->x, $p4->y], $c);
@@ -855,7 +1009,12 @@ class GDImageCanvas implements Canvas
 						$y1 = intval($y + $decody);
 						$x2 = intval($x + $decodx + $cosa*$textw);
 						$y2 = intval($y + $decody - $sina*$textw);
-						\imageline($drawing, $x1, $y1, $x2, $y2, $c);
+
+						$linecol = $c;
+						$dashes = $this->setDashPattern($c);
+						if($dashes) 
+							$linecol = IMG_COLOR_STYLED;
+						\imageline($drawing, $x1, $y1, $x2, $y2, $linecol);
 					}
 				}
 			}

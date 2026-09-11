@@ -168,6 +168,8 @@ class ImagickCanvas implements Canvas
 			'strokelinecap' => 'butt',
 			'strokelinejoin' => 'miter',
 			'strokemiterlimit' => 10,
+			'strokedashoffset' => 0,
+			'strokedasharray' => null,
 			
 			'textantialias' => true,
 			'fontsize' => 12,
@@ -247,6 +249,43 @@ class ImagickCanvas implements Canvas
 		{
 			$drawing->setStrokeMiterLimit($style['strokemiterlimit']);
 		}
+
+		if(isset($style['strokedashoffset']) && is_numeric($style['strokedashoffset']))
+		{
+			$drawing->setStrokeDashOffset($style['strokedashoffset']);
+		}
+		// Since null is valid value (turn off dashes) cannot test with isset
+		// isset($style['strokedasharray'])
+		if(array_key_exists('strokedasharray', $style))
+		{
+			
+			if(is_array($style['strokedasharray']))
+			{
+				if(count($style['strokedasharray']) > 0)
+				{
+					$drawing->setStrokeDashArray($style['strokedasharray']);
+				}
+				else
+				{
+					// Turn off dashes with empty array
+					$drawing->setStrokeDashArray(null);
+				}
+			}
+			else
+			{
+				if(is_numeric($style['strokedasharray']) && $style['strokedasharray'] > 0)
+				{
+					// A numeric value is interpreted as a single dash length
+					$drawing->setStrokeDashArray([$style['strokedasharray'], $style['strokedasharray']]);
+				}
+				else
+				{
+					// Non-numeric values or a zero turns off dashes
+					$drawing->setStrokeDashArray(null);
+				}
+			}
+		}
+		
 
 		if(isset($style['fillcolor']) && is_string($style['fillcolor']))
 		{
