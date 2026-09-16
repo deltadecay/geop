@@ -2,7 +2,9 @@
 
 namespace geop;
 
-class Point
+use ArrayAccess;
+
+class Point implements ArrayAccess
 {
 	public $x = 0;
 	public $y = 0;
@@ -30,13 +32,55 @@ class Point
 		$dy = $this->y - $p->y;
 		return sqrt($dx*$dx + $dy*$dy);
 	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetExists($offset)
+	{
+		return $offset === 0 || $offset === 1 || $offset === 'x' || $offset === 'y';
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetGet($offset)
+	{
+		if($offset === 0) return $this->x;
+		if($offset === 1) return $this->y;
+		if($offset === 'x') return $this->x;
+		if($offset === 'y') return $this->y;
+
+		throw new \Exception('Invalid offset');
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetSet($offset, $value)
+	{
+		if($offset === 0) $this->x = floatval($value);
+		elseif($offset === 1) $this->y = floatval($value);
+		elseif($offset === 'x') $this->x = floatval($value);
+		elseif($offset === 'y') $this->y = floatval($value);
+		else throw new \Exception('Invalid offset');
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetUnset($offset)
+	{
+		if($offset === 0) $this->x = 0;
+		elseif($offset === 1) $this->y = 0;
+		elseif($offset === 'x') $this->x = 0;
+		elseif($offset === 'y') $this->y = 0;
+		else throw new \Exception('Invalid offset');
+	}
+
+	public function __toString()
+	{
+		return sprintf('(%0.2f, %0.2f)', $this->x, $this->y);
+	}
 }
 
 
-class LatLon
+class LatLon implements ArrayAccess
 {
-	public $lat;
-	public $lon;
+	public $lat = 0;
+	public $lon = 0;
 
 	// Create a LatLon from decimal format.
 	public function __construct(...$p)
@@ -88,6 +132,48 @@ class LatLon
 		if($lng < -180) return $lng + 360;
 		if($lng > 180) return $lng - 360;
 		return $lng;
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetExists($offset)
+	{
+		return $offset === 0 || $offset === 1 || $offset === 'lat' || $offset === 'lon';
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetGet($offset)
+	{
+		if($offset === 0) return $this->lat;
+		if($offset === 1) return $this->lon;
+		if($offset === 'lat') return $this->lat;
+		if($offset === 'lon') return $this->lon;
+
+		throw new \Exception('Invalid offset');
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetSet($offset, $value)
+	{
+		if($offset === 0) $this->lat = floatval($value);
+		elseif($offset === 1) $this->lon = floatval($value);
+		elseif($offset === 'lat') $this->lat = floatval($value);
+		elseif($offset === 'lon') $this->lon = floatval($value);
+		else throw new \Exception('Invalid offset');
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetUnset($offset)
+	{
+		if($offset === 0) $this->lat = 0;
+		elseif($offset === 1) $this->lon = 0;
+		elseif($offset === 'lat') $this->lat = 0;
+		elseif($offset === 'lon') $this->lon = 0;
+		else throw new \Exception('Invalid offset');
+	}
+
+	public function __toString()
+	{
+		return sprintf('(%0.2f, %0.2f)', $this->lat, $this->lon);
 	}
 }
 

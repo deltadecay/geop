@@ -13,28 +13,81 @@ use \geop\Point;
 use \geop\LatLon;
 use \geop\Matrix;
 
-test("Point", function(){
+test("Point construction and get accessors", function(){
+
+	// test construction and get accessors
 	$p = new Point();
 	expect($p->x)->toBe(0);
 	expect($p->y)->toBe(0);
+	expect($p['x'])->toBe(0);
+	expect($p['y'])->toBe(0);
+	expect($p[0])->toBe(0);
+	expect($p[1])->toBe(0);
+
 	$p = new Point(1, 2);
 	expect($p->x)->toBe(1);
 	expect($p->y)->toBe(2);
+	expect($p['x'])->toBe(1);
+	expect($p['y'])->toBe(2);
+	expect($p[0])->toBe(1);
+	expect($p[1])->toBe(2);
+	
 	$p = new Point([3, 4]);
 	expect($p->x)->toBe(3);
 	expect($p->y)->toBe(4);
+	expect($p['x'])->toBe(3);
+	expect($p['y'])->toBe(4);
+	expect($p[0])->toBe(3);
+	expect($p[1])->toBe(4);
+
+	expect(function() use($p) { 
+		$invindex = $p['asd'];
+	})->toThrow("Invalid offset");
 });
 
-test("LatLon", function(){
+test("Point set accessors", function(){
+	// test set accessors
+	$p = new Point();
+	$p->x = 5;
+	$p->y = -1;
+	expect($p->x)->toBe(5);
+	expect($p->y)->toBe(-1);
+	$p[0] = -3;
+	$p[1] = 1;
+	expect($p->x)->toBe(-3);
+	expect($p->y)->toBe(1);
+	$p['x'] = 12;
+	$p['y'] = 9;
+	expect($p->x)->toBe(12);
+	expect($p->y)->toBe(9);
+	
+	expect(function() use($p) { 
+		$p['zz'] = 10;
+	})->toThrow("Invalid offset");
+});
+
+test("LatLon construction and get accessors", function(){
 	$latlon = new LatLon();
 	expect($latlon->lat)->toBe(0);
 	expect($latlon->lon)->toBe(0);
+	expect($latlon['lat'])->toBe(0);
+	expect($latlon['lon'])->toBe(0);
+	expect($latlon[0])->toBe(0);
+	expect($latlon[1])->toBe(0);
 	$latlon = new LatLon(60, 20);
 	expect($latlon->lat)->toBe(60);
 	expect($latlon->lon)->toBe(20);
+	expect($latlon['lat'])->toBe(60);
+	expect($latlon['lon'])->toBe(20);
+	expect($latlon[0])->toBe(60);
+	expect($latlon[1])->toBe(20);
 	$latlon = new LatLon([60, 20]);
 	expect($latlon->lat)->toBe(60);
 	expect($latlon->lon)->toBe(20);
+	expect($latlon['lat'])->toBe(60);
+	expect($latlon['lon'])->toBe(20);
+	expect($latlon[0])->toBe(60);
+	expect($latlon[1])->toBe(20);
 });
 
 
