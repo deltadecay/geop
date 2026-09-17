@@ -1,4 +1,4 @@
-FROM php:8.5.9-cli-alpine3.24
+FROM php:8.5.10-cli-alpine3.24
 
 # Some imagick formats have been separated into own packages:
 # https://pkgs.alpinelinux.org/packages?name=imagemagick-*&branch=v3.24&repo=&arch=aarch64&origin=&flagged=&maintainer=

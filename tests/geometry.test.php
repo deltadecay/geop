@@ -98,7 +98,7 @@ test("LatLon from Degrees Minutes Seconds", function(){
 });
 
 
-test("Matrix", function(){
+test("Matrix construction and get accessors", function(){
 	$m = new Matrix();
 	expect($m->a)->toBe(1);
 	expect($m->b)->toBe(0);
@@ -120,6 +120,15 @@ test("Matrix", function(){
 	expect($m->d)->toBe(0);
 	expect($m->e)->toBe(1);
 	expect($m->f)->toBe(10);
+
+	// Use indexing to access the elements, first three elements is the first row [a,b,c], 
+	// next three the second row [d,e,f]
+	expect($m[0])->toBe(1);
+	expect($m[1])->toBe(0);
+	expect($m[2])->toBe(5);
+	expect($m[3])->toBe(0);
+	expect($m[4])->toBe(1);
+	expect($m[5])->toBe(10);
 });
 
 test("Matrix transformations", function(){
@@ -135,6 +144,32 @@ test("Matrix transformations", function(){
 	$p = $m->transform(new Point(5, 0));
 	expect($p->x)->toBeCloseTo(10, 8);
 	expect($p->y)->toBeCloseTo(0, 8);
+});
+
+test("Matrix reflections", function(){
+	// Reflect about the x-axis (0 degrees)
+	$m = Matrix::reflection(0); 
+	$p = $m->transform(new Point(4, 2));
+	expect($p->x)->toBeCloseTo(4, 8);
+	expect($p->y)->toBeCloseTo(-2, 8);
+
+	// Reflect about the y-axis (90 degrees with x-axis)
+	$m = Matrix::reflection(M_PI/2); 
+	$p = $m->transform(new Point(4, 2));
+	expect($p->x)->toBeCloseTo(-4, 8);
+	expect($p->y)->toBeCloseTo(2, 8);
+
+	// Reflect about the line y=x (45 degrees with x-axis)
+	$m = Matrix::reflection(M_PI/4); 
+	$p = $m->transform(new Point(4, 2));
+	expect($p->x)->toBeCloseTo(2, 8);
+	expect($p->y)->toBeCloseTo(4, 8);
+
+	// Reflect about the line y=-x (-45 degrees with x-axis)
+	$m = Matrix::reflection(-M_PI/4); 
+	$p = $m->transform(new Point(4, 2));
+	expect($p->x)->toBeCloseTo(-2, 8);
+	expect($p->y)->toBeCloseTo(-4, 8);
 });
 
 

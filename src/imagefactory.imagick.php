@@ -381,7 +381,7 @@ class ImagickCanvas implements Canvas
 		$drawing = $this->drawing;
 		if($drawing != null && $matrix != null)
 		{
-			if($matrix instanceof Matrix)
+			/*if($matrix instanceof Matrix)
 			{
 				$affine = [
 					"sx" => $matrix->a, "rx" => $matrix->b, "tx" => $matrix->c,
@@ -390,14 +390,18 @@ class ImagickCanvas implements Canvas
 			else
 			{
 				$affine = $matrix;
-			}
+			}*/
+			$affine = [
+				"sx" => $matrix[0], "rx" => $matrix[1], "tx" => $matrix[2],
+				"ry" => $matrix[3], "sy" => $matrix[4], "ty" => $matrix[5]];
 			$drawing->affine($affine);
 		}
 	}
 
-	private function pointToImagickPoint(Point $p) 
+	private function pointToImagickPoint($p) 
 	{
-		return ['x' => $p->x, 'y' => $p->y];
+		return ['x' => $p[0], 'y' => $p[1]];
+		//return ['x' => $p->x, 'y' => $p->y];
 	}
 
 	public function drawPolygon($polygon)
@@ -425,10 +429,12 @@ class ImagickCanvas implements Canvas
 					$npoints = count($ring);
 					if($npoints > 0)
 					{
-						$drawing->pathMoveToAbsolute($ring[0]->x, $ring[0]->y);
+						//$drawing->pathMoveToAbsolute($ring[0]->x, $ring[0]->y);
+						$drawing->pathMoveToAbsolute($ring[0][0], $ring[0][1]);
 						for($i=1; $i<$npoints; $i++)
 						{
-							$drawing->pathLineToAbsolute($ring[$i]->x, $ring[$i]->y);
+							//$drawing->pathLineToAbsolute($ring[$i]->x, $ring[$i]->y);
+							$drawing->pathLineToAbsolute($ring[$i][0], $ring[$i][1]);
 						}
 					}
 				}
@@ -459,8 +465,10 @@ class ImagickCanvas implements Canvas
 		$drawing = $this->drawing;
 		if($drawing != null)
 		{
-			$x = $point->x;
-			$y = $point->y;
+			//$x = $point->x;
+			//$y = $point->y;
+			$x = $point[0];
+			$y = $point[1];
 			$drawing->circle($x, $y, $x + $radius, $y);
 		}
 	}
@@ -470,10 +478,14 @@ class ImagickCanvas implements Canvas
 		$drawing = $this->drawing;
 		if($drawing != null)
 		{
-			$x1 = $pointTopLeft->x;
-			$y1 = $pointTopLeft->y;
-			$x2 = $pointBottomRight->x;
-			$y2 = $pointBottomRight->y;
+			//$x1 = $pointTopLeft->x;
+			//$y1 = $pointTopLeft->y;
+			//$x2 = $pointBottomRight->x;
+			//$y2 = $pointBottomRight->y;
+			$x1 = $pointTopLeft[0];
+			$y1 = $pointTopLeft[1];
+			$x2 = $pointBottomRight[0];
+			$y2 = $pointBottomRight[1];
 			$drawing->rectangle($x1, $y1, $x2, $y2);
 		}
 	}
@@ -483,8 +495,10 @@ class ImagickCanvas implements Canvas
 		$drawing = $this->drawing;
 		if($drawing != null && $image != null)
 		{
-			$x = $point->x;
-			$y = $point->y;
+			//$x = $point->x;
+			//$y = $point->y;
+			$x = $point[0];
+			$y = $point[1];
 			$drawing->composite(\Imagick::COMPOSITE_SRCOVER, $x, $y, $width, $height, $image);
 		}
 	}
@@ -494,8 +508,10 @@ class ImagickCanvas implements Canvas
 		$drawing = $this->drawing;
 		if($drawing != null)
 		{
-			$x = $point->x;
-			$y = $point->y;
+			//$x = $point->x;
+			//$y = $point->y;
+			$x = $point[0];
+			$y = $point[1];
 			if($drawing->getFont() !== false)
 			{
 				$drawing->annotation($x, $y, $text);

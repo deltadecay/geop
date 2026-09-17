@@ -539,7 +539,8 @@ class MarkerLayer extends Layer
 				// The mapimage coordinates grow from top to bottom: (0,0) is in upper left, but our symbol
 				// is specified in a right hand coordinates system with x to right and y up,
 				// so we must reflect y when drawing the polygon
-				$drawing->setTransformation(Matrix::reflection(1, -1));
+				$drawing->setTransformation(Matrix::scale(1, -1));
+				//$drawing->setTransformation(Matrix::reflection(0));
 				*/
 				// Instead of two transformations, we can combine them to one due to
 				// the translation coming after the reflection

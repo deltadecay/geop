@@ -179,7 +179,7 @@ class LatLon implements ArrayAccess
 
 
 // Affine transformation matrix
-class Matrix
+class Matrix implements ArrayAccess
 {
 	// a b c
 	// d e f
@@ -212,6 +212,55 @@ class Matrix
 		}
 	}
 
+
+	
+	#[\ReturnTypeWillChange]
+	public function offsetExists($offset)
+	{
+		return $offset >= 0 && $offset < 6;
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetGet($offset)
+	{
+		if($offset === 0) return $this->a;
+		if($offset === 1) return $this->b;
+		if($offset === 2) return $this->c;
+		if($offset === 3) return $this->d;
+		if($offset === 4) return $this->e;
+		if($offset === 5) return $this->f;
+
+		throw new \Exception('Invalid offset');
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetSet($offset, $value)
+	{
+		if($offset === 0) $this->a = floatval($value);
+		elseif($offset === 1) $this->b = floatval($value);
+		elseif($offset === 2) $this->c = floatval($value);
+		elseif($offset === 3) $this->d = floatval($value);
+		elseif($offset === 4) $this->e = floatval($value);
+		elseif($offset === 5) $this->f = floatval($value);
+		else throw new \Exception('Invalid offset');
+	}
+
+	#[\ReturnTypeWillChange]
+	public function offsetUnset($offset)
+	{
+		if($offset === 0) $this->a = 0;
+		elseif($offset === 1) $this->b = 0;
+		elseif($offset === 2) $this->c = 0;
+		elseif($offset === 3) $this->d = 0;
+		elseif($offset === 4) $this->e = 0;
+		elseif($offset === 5) $this->f = 0;
+		else throw new \Exception('Invalid offset');
+	}
+
+	public function __toString()
+	{
+		return sprintf('[%0.2f, %0.2f, %0.2f; %0.2f, %0.2f, %0.2f]', $this->a, $this->b, $this->c, $this->d, $this->e, $this->f);
+	}
 
 	public function copy()
 	{
@@ -287,9 +336,12 @@ class Matrix
 		return new Matrix($sx, 0, 0, 0, $sy, 0);
 	}
 
-	public static function reflection($rx=1, $ry=1)
+	// Reflection about a line at an angle from the x-axis
+	public static function reflection($theta = 0)
 	{
-		return new Matrix($rx, 0, 0, 0, $ry, 0);
+		$c2 = cos(2 * $theta);
+		$s2 = sin(2 * $theta);
+		return new Matrix($c2, $s2, 0, $s2, -$c2, 0);
 	}
 
 	public static function rotate($theta)
